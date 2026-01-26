@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stream - Native Resolution</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        /* No width: 100% here; we want native size */
+        video {
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+
+    <video id="video" controls autoplay></video>
+
+    <script>
+        var video = document.getElementById('video');
+        var videoSrc = 'playlist.m3u8'; // Your HLS playlist file
+
+        if (Hls.isSupported()) {
+          var hls = new Hls()
+//          var hls = new Hls({
+//    liveSyncDurationCount: 3, // Start playing after only 3 segments are ready
+//    maxBufferLength: 10,      // Don't buffer more than 10 seconds (prevents lag buildup)
+//    enableWorker: true        // Use a web worker to keep the UI smooth
+//});
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+            
+            // This event fires once the video resolution is known
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.play();
+            });
+
+            // Force exact dimensions when the metadata is loaded
+            video.addEventListener('loadedmetadata', function() {
+                console.log("Native Resolution: " + video.videoWidth + "x" + video.videoHeight);
+                // Set the element size to match the video pixels exactly
+                video.width = video.videoWidth;
+                video.height = video.videoHeight;
+            });
+
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Fallback for Safari
+            video.src = videoSrc;
+            video.addEventListener('loadedmetadata', function() {
+                video.width = video.videoWidth;
+                video.height = video.videoHeight;
+                video.play();
+            });
+        }
+    </script>
+</body>
+</html>

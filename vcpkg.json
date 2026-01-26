@@ -1,0 +1,22 @@
+{
+  "name": "hlscast",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "name": "gstreamer",
+      "features": [
+        "plugins-base",
+        "plugins-good",
+        "plugins-bad",
+        "plugins-ugly",
+        "openh264",
+        "wayland"
+      ]
+    },
+    "boost-asio",
+    "boost-beast",
+    "boost-coroutine",
+    "boost-system",
+    "readerwriterqueue"
+  ]
+}
