@@ -9,10 +9,10 @@
         "plugins-good",
         "plugins-bad",
         "plugins-ugly",
-        "openh264",
-        "wayland"
+        "openh264"
       ]
     },
+    "pipewire",
     "boost-asio",
     "boost-beast",
     "boost-coroutine",
