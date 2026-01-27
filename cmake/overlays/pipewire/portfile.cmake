@@ -25,7 +25,7 @@ vcpkg_configure_meson(
         -Dbluez5-codec-ldac=disabled
         -Dbluez5=disabled
         -Dcontrol=disabled
-        -Ddbus=disabled
+        -Ddbus=enabled #disabled in original
         -Ddocs=disabled
         -Decho-cancel-webrtc=disabled
         -Devl=disabled
@@ -64,7 +64,7 @@ vcpkg_configure_meson(
         -Dudev=disabled
         -Dudevrulesdir=disabled
         -Dv4l2=disabled
-        -Dvideoconvert=disabled
+        -Dvideoconvert=enabled #disabled in original
         -Dvideotestsrc=disabled
         -Dvolume=disabled
         -Dvulkan=disabled

@@ -90,14 +90,12 @@ export namespace HlsCast::Media {
               std::println ("no sink");
 
             g_signal_connect(sink, "new-sample", G_CALLBACK(+[](GstElement* s, gpointer d) {
-                std::println ("new-sample");
                 auto q = static_cast<Core::FrameQueue*>(d);
                 auto sample = gst_app_sink_pull_sample(GST_APP_SINK(s));
                 auto buf = gst_sample_get_buffer(sample);
                 GstMapInfo map;
                 if (gst_buffer_map(buf, &map, GST_MAP_READ))
                 {
-                    std::cout << std::format ("new-sample size is: {}", std::to_string(map.size));
                     q->enqueue(std::vector<std::uint8_t>(map.data, map.data + map.size));
                     gst_buffer_unmap(buf, &map);
                 }
