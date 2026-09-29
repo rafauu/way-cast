@@ -1,5 +1,5 @@
 {
-  "name": "hlscast",
+  "name": "waycast",
   "version": "1.0.0",
   "dependencies": [
     {
@@ -9,9 +9,13 @@
         "plugins-good",
         "plugins-bad",
         "plugins-ugly",
-        "openh264"
+        "vpx",
+        "webrtc",
+        "dtls",
+        "srtp"
       ]
     },
+    "libnice-gst",
     "pipewire",
     "boost-asio",
     "boost-beast",
