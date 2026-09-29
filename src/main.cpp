@@ -1,6 +1,5 @@
 #include <csignal>
 
-import AppConfig;
 import GstPipelineManager;
 import std;
 
