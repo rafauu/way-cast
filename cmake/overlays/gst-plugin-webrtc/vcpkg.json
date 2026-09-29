@@ -1,0 +1,12 @@
+{
+  "name": "gst-plugin-webrtc",
+  "version": "0.15.3",
+  "description": "GStreamer WebRTC sink implemented in Rust",
+  "homepage": "https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs",
+  "license": "MIT",
+  "supports": "linux",
+  "dependencies": [
+    "gstreamer"
+  ]
+}
+

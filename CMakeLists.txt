@@ -16,9 +16,6 @@ pkg_check_modules(GST_WEBRTC REQUIRED IMPORTED_TARGET gstreamer-webrtc-1.0)
 pkg_check_modules(GST_SDP REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0)
 pkg_check_modules(GIO REQUIRED IMPORTED_TARGET gio-2.0 gio-unix-2.0)
 
-find_package(Boost CONFIG REQUIRED COMPONENTS coroutine system)
-find_package(readerwriterqueue CONFIG REQUIRED)
-
 add_library(app_modules)
 
 target_sources(app_modules PUBLIC
@@ -28,9 +25,6 @@ target_sources(app_modules PUBLIC
         src/AppConfig.ixx
         src/WaylandPortal.ixx
         src/GstPipelineManager.ixx
-        src/HttpWebServer.ixx
-    PRIVATE
-        src/HttpWebServer.cpp
 )
 
 target_compile_options(app_modules PRIVATE -fmodules-ts)
@@ -46,7 +40,6 @@ target_link_libraries(app_modules PRIVATE
     PkgConfig::GST_WEBRTC
     PkgConfig::GST_SDP
     PkgConfig::GIO
-    readerwriterqueue::readerwriterqueue
 )
 
 add_executable(app src/main.cpp)

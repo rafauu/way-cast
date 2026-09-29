@@ -1,53 +1,79 @@
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/signal_set.hpp>
-#include <boost/asio/use_awaitable.hpp>
+#include <csignal>
 
 import AppConfig;
 import GstPipelineManager;
-import HttpWebServer;
-import MpscQueue;
 import std;
 
-namespace net = boost::asio;
+namespace {
+
+std::condition_variable_any shutdown_cv;
+std::mutex shutdown_mutex;
+std::atomic_bool shutdown_requested{false};
+
+void request_shutdown(int) {
+    shutdown_requested.store(true, std::memory_order_release);
+    shutdown_cv.notify_all();
+}
+
+}
 
 int main() {
-    std::println("==================================================================");
-    std::println(" C++26 Wayland Native Screen-Share Engine (PipeWire + MPSC Bus)   ");
-    std::println("==================================================================");
+    std::println(
+        "=================================================================="
+    );
+    std::println(
+        " C++26 Wayland Native Screen-Share Engine (PipeWire + WebRTCSink)"
+    );
+    std::println(
+        "=================================================================="
+    );
 
     try {
-        LockFreeMpscQueue<OutboundMessage> outbound_queue;
+        std::signal(SIGINT, request_shutdown);
+        std::signal(SIGTERM, request_shutdown);
 
-        auto pipeline_mgr = std::make_shared<GstPipelineManager>(outbound_queue);
-        pipeline_mgr->start();
+        GstPipelineManager pipeline_mgr;
+        pipeline_mgr.start();
 
-        web::HttpWebServer server(std::string(config::HOST_ADDRESS), config::PORT, pipeline_mgr);
-        server.start(config::THREAD_POOL_SIZE);
+        std::println(
+            "[SERVER ACTIVE] WebRTCSink is running."
+        );
+        std::println(
+            "[SERVER ACTIVE] Press Ctrl+C to shut down cleanly.\n"
+        );
 
-        net::io_context signal_ioc;
-        net::signal_set signals(signal_ioc, SIGINT, SIGTERM);
+        std::mutex wait_mutex;
+        std::unique_lock lock(wait_mutex);
 
-        net::co_spawn(signal_ioc, [&]() -> net::awaitable<void> {
-            int sig = co_await signals.async_wait(net::use_awaitable);
-            std::println("\n[Shutdown] Signal {} received. Terminating gracefully...", sig);
+        shutdown_cv.wait(
+            lock,
+            [] {
+                return shutdown_requested.load(
+                    std::memory_order_acquire
+                );
+            }
+        );
 
-            server.stop();
-            pipeline_mgr->stop();
-        }, net::detached);
+        std::println(
+            "\n[Shutdown] Signal received. Stopping..."
+        );
 
-        std::println("[SERVER ACTIVE] WebServer listening on http://localhost:8000");
-        std::println("[SERVER ACTIVE] Press Ctrl+C to shut down cleanly.\n");
+        pipeline_mgr.stop();
 
-        signal_ioc.run();
+        std::println(
+            "[Shutdown] GStreamer stopped safely."
+        );
 
-        std::println("[Shutdown] All background pools & pipelines stopped safely.");
+        return 0;
     }
     catch (const std::exception& e) {
-        std::println(std::cerr, "[FATAL ERROR] {}", e.what());
-        return EXIT_FAILURE;
-    }
+        std::println(
+            std::cerr,
+            "[FATAL ERROR] {}",
+            e.what()
+        );
 
-    return EXIT_SUCCESS;
+        return 1;
+    }
 }
+

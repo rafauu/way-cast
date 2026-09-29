@@ -1,81 +1,78 @@
-# Prerequisites
-*.d
+# --- Build & Output Directories ---
+build/
+build-*/
+bin/
+lib/
+out/
+cmake-build-*/
 
-# Compiled Object files
-*.slo
-*.lo
+# --- C++ Modules & Precompiled Headers ---
+*.gcm             # GCC C++20/23 compiled module interfaces
+*.pcm             # Clang C++20/23 compiled module interfaces
+*.ifc             # MSVC C++20/23 module interfaces
+*.bmi             # Generic binary module interface files
+*.modmap          # CMake module dependency mapping files
+*.gch             # GCC precompiled headers
+*.pch             # MSVC precompiled headers
+
+# --- Compilation & Linker Artifacts ---
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
+*.a
 *.so
+*.so.*
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
 *.exe
-*.out
-*.app
+*.elf
+*.d               # Auto-generated dependency files
 
-# debug information files
-*.dwo
+# --- CMake Artifacts ---
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CMakeUserPresets.json
+compile_commands.json
+*_configure_manifest.txt
 
-/.git
+# --- Package Managers & Dependencies (CPM, vcpkg, Conan) ---
+_deps/            # CPM.cmake / CMake FetchContent downloads
+vcpkg_installed/
+.conan/
 
-/CMakeUserPresets.json
+# --- Ninja & Build Tool Logs ---
+.ninja_deps
+.ninja_log
+build.ninja
 
-# Common build directories
-/build*/
+# --- IDEs & Code Editors ---
+# JetBrains CLion
+.idea/
 
-# CI jobs that run in symlinked trees produce these artifacts.
-/real_work/
-/work
+# Visual Studio Code (Keep project configurations if present, ignore workspace cache)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# MacOS Finder files.
+# Visual Studio
+.vs/
+*.user
+*.sln.docstates
+
+# Vim / Emacs
+*~
+*.swp
+*.swo
+
+# --- Profiling & Coverage Tools ---
+*.gcno
+*.gcda
+*.gcov
+callgrind.out.*
+gmon.out
+
+# --- OS Specific ---
 .DS_Store
-
-# Python compile output.
-*.pyc
-
-# See Utilities/Sphinx/tutorial_archive.cmake
-/Help/_generated
-
-# CLion work directory
-/.idea/
-# CLion build directories
-/cmake-build-*/
-
-# QtCreator files.
-/CMakeLists.txt.user*
-
-# Visual Studio Code
-/.vscode/
-/.cache/
-
-# Visual Studio work directory
-/.vs/
-# Visual Studio build directory
-/out/
-
-# clang-tidy output
-/clang-tidy-fixes.patch
+Thumbs.db

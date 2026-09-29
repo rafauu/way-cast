@@ -1,26 +1,20 @@
 {
-  "name": "waycast",
-  "version": "1.0.0",
-  "dependencies": [
-    {
-      "name": "gstreamer",
-      "features": [
-        "plugins-base",
-        "plugins-good",
-        "plugins-bad",
-        "plugins-ugly",
-        "vpx",
-        "webrtc",
-        "dtls",
-        "srtp"
-      ]
-    },
-    "libnice-gst",
-    "pipewire",
-    "boost-asio",
-    "boost-beast",
-    "boost-coroutine",
-    "boost-system",
-    "readerwriterqueue"
-  ]
+    "name": "waycast",
+    "version": "1.0.0",
+    "dependencies": [
+        {
+            "name": "gstreamer",
+            "features": [
+                "plugins-base",
+                "plugins-good",
+                "plugins-bad",
+                "plugins-ugly",
+                "vpx",
+                "webrtc"
+            ]
+        },
+        "libnice-gst",
+        "gst-plugin-webrtc",
+        "pipewire"
+    ]
 }
