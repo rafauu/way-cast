@@ -3,20 +3,23 @@
 import GstPipelineManager;
 import std;
 
-namespace {
+namespace
+{
 
 std::condition_variable_any shutdown_cv;
 std::mutex shutdown_mutex;
 std::atomic_bool shutdown_requested{false};
 
-void request_shutdown(int) {
+void request_shutdown(int)
+{
     shutdown_requested.store(true, std::memory_order_release);
     shutdown_cv.notify_all();
 }
 
 }
 
-int main() {
+int main()
+{
     std::println(
         "=================================================================="
     );
@@ -27,51 +30,38 @@ int main() {
         "=================================================================="
     );
 
-    try {
+    try
+    {
         std::signal(SIGINT, request_shutdown);
         std::signal(SIGTERM, request_shutdown);
 
-        GstPipelineManager pipeline_mgr;
-        pipeline_mgr.start();
+        {
+            GstPipelineManager pipelineManager{};
 
-        std::println(
-            "[SERVER ACTIVE] WebRTCSink is running."
-        );
-        std::println(
-            "[SERVER ACTIVE] Press Ctrl+C to shut down cleanly.\n"
-        );
+            std::println("[SERVER ACTIVE] WebRTCSink is running.");
+            std::println("[SERVER ACTIVE] Press Ctrl+C to shut down.\n");
 
-        std::mutex wait_mutex;
-        std::unique_lock lock(wait_mutex);
+            std::mutex wait_mutex;
+            std::unique_lock lock(wait_mutex);
 
-        shutdown_cv.wait(
-            lock,
-            [] {
-                return shutdown_requested.load(
-                    std::memory_order_acquire
-                );
-            }
-        );
+            shutdown_cv.wait(
+                lock,
+                [] {
+                    return shutdown_requested.load(
+                        std::memory_order_acquire
+                    );
+                }
+            );
 
-        std::println(
-            "\n[Shutdown] Signal received. Stopping..."
-        );
+            std::println("\n[Shutdown] Signal received. Stopping...");
+        }
 
-        pipeline_mgr.stop();
-
-        std::println(
-            "[Shutdown] GStreamer stopped safely."
-        );
-
+        std::println("[Shutdown] GStreamer stopped safely.");
         return 0;
     }
-    catch (const std::exception& e) {
-        std::println(
-            std::cerr,
-            "[FATAL ERROR] {}",
-            e.what()
-        );
-
+    catch (const std::exception& e)
+    {
+        std::println(std::cerr, "[FATAL ERROR] {}", e.what());
         return 1;
     }
 }
