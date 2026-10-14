@@ -31,7 +31,7 @@ pkg_check_modules(GST_SDP REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0)
 pkg_check_modules(GIO REQUIRED IMPORTED_TARGET gio-2.0 gio-unix-2.0)
 
 # -----------------------------------------------------------------------------
-# vcpkg paths
+# Plugins defines
 #
 # With:
 #   VCPKG_TARGET_TRIPLET=x64-linux-release
@@ -55,25 +55,29 @@ set(WAYCAST_LIBVA_DRIVERS_PATH
   "/usr/lib/x86_64-linux-gnu/dri"
 )
 
+set(WAYCAST_NVIDIA_OVER_VAAPI
+  1
+)
+
 # -----------------------------------------------------------------------------
 # GCC std module
 # GCC 15 requires std.cc to be registered as a CXX_MODULES file set.
 # -----------------------------------------------------------------------------
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    string(REGEX MATCH "^[0-9]+" GCC_MAJOR "${CMAKE_CXX_COMPILER_VERSION}")
+  string(REGEX MATCH "^[0-9]+" GCC_MAJOR "${CMAKE_CXX_COMPILER_VERSION}")
 
-    foreach(PREFIX /usr /usr/local)
-        if(EXISTS "${PREFIX}/include/c++/${GCC_MAJOR}/bits/std.cc")
-            set(GCC_STD_MODULE "${PREFIX}/include/c++/${GCC_MAJOR}/bits/std.cc")
-            set(GCC_STD_DIR "${PREFIX}/include/c++/${GCC_MAJOR}/bits")
-            break()
-        endif()
-    endforeach()
-
-    if(NOT GCC_STD_MODULE)
-        message(FATAL_ERROR "Could not find std.cc for GCC ${GCC_MAJOR}.")
+  foreach(PREFIX /usr /usr/local)
+    if(EXISTS "${PREFIX}/include/c++/${GCC_MAJOR}/bits/std.cc")
+      set(GCC_STD_MODULE "${PREFIX}/include/c++/${GCC_MAJOR}/bits/std.cc")
+      set(GCC_STD_DIR "${PREFIX}/include/c++/${GCC_MAJOR}/bits")
+      break()
     endif()
+  endforeach()
+
+  if(NOT GCC_STD_MODULE)
+    message(FATAL_ERROR "Could not find std.cc for GCC ${GCC_MAJOR}.")
+  endif()
 endif()
 
 # -----------------------------------------------------------------------------
@@ -100,7 +104,9 @@ target_sources(${PROJECT_NAME}
   PRIVATE
     FILE_SET std_module TYPE CXX_MODULES BASE_DIRS "${GCC_STD_DIR}" FILES ${GCC_STD_MODULE}
     FILE_SET CXX_MODULES TYPE CXX_MODULES FILES
+      src/Environment.cppm
       src/GstPipelineManager.cppm
+      src/GstRaii.cppm
       src/WaylandPortal.cppm
 )
 
@@ -121,9 +127,10 @@ target_link_libraries(${PROJECT_NAME}
 
 target_compile_definitions(${PROJECT_NAME}
   PRIVATE
-    WAYCAST_GSTREAMER_PLUGIN_DIR="${WAYCAST_GSTREAMER_PLUGIN_DIR}"
-    WAYCAST_WEB_DIR="${WAYCAST_WEB_DIR}"
-    WAYCAST_LIBVA_DRIVERS_PATH="${WAYCAST_LIBVA_DRIVERS_PATH}"
+    WAYCAST_GSTREAMER_PLUGIN_DIR=\"${WAYCAST_GSTREAMER_PLUGIN_DIR}\"
+    WAYCAST_WEB_DIR=\"${WAYCAST_WEB_DIR}\"
+    WAYCAST_LIBVA_DRIVERS_PATH=\"${WAYCAST_LIBVA_DRIVERS_PATH}\"
+    WAYCAST_NVIDIA_OVER_VAAPI=${WAYCAST_NVIDIA_OVER_VAAPI}
 )
 
 # -----------------------------------------------------------------------------
@@ -142,6 +149,7 @@ message(STATUS "vcpkg prefix:        ${WAYCAST_VCPKG_PREFIX}")
 message(STATUS "GStreamer plugins:   ${WAYCAST_GSTREAMER_PLUGIN_DIR}")
 message(STATUS "WebRTC web UI:       ${WAYCAST_WEB_DIR}")
 message(STATUS "libVA drivers path:  ${WAYCAST_LIBVA_DRIVERS_PATH}")
+message(STATUS "Nvidia over VAAPI:   ${WAYCAST_NVIDIA_OVER_VAAPI}")
 message(STATUS "============================================================")
 message(STATUS "")
 

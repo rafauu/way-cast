@@ -1,19 +1,17 @@
 #include <csignal>
 
 import GstPipelineManager;
+import Environment;
 import std;
 
 namespace
 {
 
-std::condition_variable_any shutdown_cv;
-std::mutex shutdown_mutex;
-std::atomic_bool shutdown_requested{false};
+volatile std::sig_atomic_t shutdownRequested = 0;
 
-void request_shutdown(int)
+void requestShutdown(int) noexcept
 {
-    shutdown_requested.store(true, std::memory_order_release);
-    shutdown_cv.notify_all();
+    shutdownRequested = 1;
 }
 
 }
@@ -24,7 +22,7 @@ int main()
         "=================================================================="
     );
     std::println(
-        " C++26 Wayland Native Screen-Share Engine (PipeWire + WebRTCSink)"
+        " Wayland Native Screen-Share Engine (PipeWire + WebRTCSink)"
     );
     std::println(
         "=================================================================="
@@ -32,8 +30,10 @@ int main()
 
     try
     {
-        std::signal(SIGINT, request_shutdown);
-        std::signal(SIGTERM, request_shutdown);
+        std::signal(SIGINT, requestShutdown);
+        std::signal(SIGTERM, requestShutdown);
+
+        Environment::setPaths();
 
         {
             GstPipelineManager pipelineManager{};
@@ -41,17 +41,11 @@ int main()
             std::println("[SERVER ACTIVE] WebRTCSink is running.");
             std::println("[SERVER ACTIVE] Press Ctrl+C to shut down.\n");
 
-            std::mutex wait_mutex;
-            std::unique_lock lock(wait_mutex);
-
-            shutdown_cv.wait(
-                lock,
-                [] {
-                    return shutdown_requested.load(
-                        std::memory_order_acquire
-                    );
-                }
-            );
+            while (shutdownRequested == 0)
+            {
+                using namespace std::chrono_literals;
+                std::this_thread::sleep_for(100ms);
+            }
 
             std::println("\n[Shutdown] Signal received. Stopping...");
         }

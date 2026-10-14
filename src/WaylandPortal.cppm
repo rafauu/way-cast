@@ -7,9 +7,11 @@ export module WaylandPortal;
 
 import std;
 
-export class WaylandPortal {
+export class WaylandPortal
+{
 public:
-    struct SessionInfo {
+    struct SessionInfo
+    {
         uint32_t pipewire_node_id{0};
 
         // Preferred identifier for PipeWire stream targeting.
@@ -34,13 +36,14 @@ private:
     static constexpr const char* REQUEST_IFACE =
         "org.freedesktop.portal.Request";
 
-    struct PortalContext {
+    struct PortalContext
+    {
         GDBusConnection* conn{nullptr};
         GMainLoop* loop{nullptr};
 
         std::promise<SessionInfo>* promise{nullptr};
 
-        std::string session_handle;
+        std::string session_handle{};
 
         uint32_t node_id{0};
         uint64_t pipewire_serial{0};
@@ -53,7 +56,8 @@ private:
         bool promise_completed{false};
     };
 
-    static std::string makeToken(std::string_view prefix) {
+    static std::string makeToken(std::string_view prefix)
+    {
         static std::atomic_uint64_t counter{0};
 
         const auto id =
@@ -65,20 +69,26 @@ private:
     static void complete(
         PortalContext* ctx,
         SessionInfo info
-    ) {
+    )
+    {
         if (ctx->promise_completed)
+        {
             return;
+        }
 
         ctx->promise_completed = true;
 
-        try {
+        try
+        {
             ctx->promise->set_value(info);
         }
-        catch (const std::future_error&) {
+        catch (const std::future_error&)
+        {
             // Promise was already satisfied.
         }
 
-        if (ctx->loop) {
+        if (ctx->loop)
+        {
             g_main_loop_quit(ctx->loop);
         }
     }
@@ -86,11 +96,13 @@ private:
     static void fail(
         PortalContext* ctx,
         const char* reason
-    ) {
-        std::cerr
-            << "[WaylandPortal] "
-            << reason
-            << std::endl;
+    )
+    {
+        std::println(
+            std::cerr,
+            "[WaylandPortal] {}",
+            reason
+        );
 
         complete(
             ctx,
@@ -102,7 +114,8 @@ private:
         GVariant* dict,
         const char* key,
         uint32_t& out
-    ) {
+    )
+    {
         GVariant* value =
             g_variant_lookup_value(
                 dict,
@@ -111,7 +124,9 @@ private:
             );
 
         if (!value)
+        {
             return false;
+        }
 
         out = g_variant_get_uint32(value);
 
@@ -124,7 +139,8 @@ private:
         GVariant* dict,
         const char* key,
         uint64_t& out
-    ) {
+    )
+    {
         GVariant* value =
             g_variant_lookup_value(
                 dict,
@@ -133,7 +149,9 @@ private:
             );
 
         if (!value)
+        {
             return false;
+        }
 
         out = g_variant_get_uint64(value);
 
@@ -144,11 +162,11 @@ private:
 
     static bool callSelectSources(
         PortalContext* ctx
-    ) {
-        std::cout
-            << "[WaylandPortal] "
-               "SelectSources: requesting monitor only..."
-            << std::endl;
+    )
+    {
+        std::println(
+            "[WaylandPortal] SelectSources: requesting monitor only..."
+        );
 
         GVariantBuilder options;
 
@@ -214,12 +232,13 @@ private:
             &error
         );
 
-        if (error) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "SelectSources failed: "
-                << error->message
-                << std::endl;
+        if (error)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] SelectSources failed: {}",
+                error->message
+            );
 
             g_error_free(error);
 
@@ -231,11 +250,11 @@ private:
 
     static bool callStart(
         PortalContext* ctx
-    ) {
-        std::cout
-            << "[WaylandPortal] "
-               "Start: opening source-selection dialog..."
-            << std::endl;
+    )
+    {
+        std::println(
+            "[WaylandPortal] Start: opening source-selection dialog..."
+        );
 
         GVariantBuilder options;
 
@@ -283,12 +302,13 @@ private:
             &error
         );
 
-        if (error) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "Start failed: "
-                << error->message
-                << std::endl;
+        if (error)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] Start failed: {}",
+                error->message
+            );
 
             g_error_free(error);
 
@@ -300,11 +320,11 @@ private:
 
     static bool openPipeWireRemote(
         PortalContext* ctx
-    ) {
-        std::cout
-            << "[WaylandPortal] "
-               "Opening PipeWire remote..."
-            << std::endl;
+    )
+    {
+        std::println(
+            "[WaylandPortal] Opening PipeWire remote..."
+        );
 
         /*
          * OpenPipeWireRemote takes:
@@ -322,61 +342,58 @@ private:
         GVariant* result =
             g_dbus_connection_call_with_unix_fd_list_sync(
                 ctx->conn,
-
                 PORTAL_BUS,
                 PORTAL_PATH,
-
                 SCREENCAST_IFACE,
                 "OpenPipeWireRemote",
-
                 g_variant_new(
                     "(oa{sv})",
                     ctx->session_handle.c_str(),
                     nullptr
                 ),
-
                 G_VARIANT_TYPE("(h)"),
-
                 G_DBUS_CALL_FLAGS_NONE,
-
                 -1,
-
                 nullptr,
-
                 &fd_list,
-
                 nullptr,
-
                 &error
             );
 
-        if (error) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "OpenPipeWireRemote failed: "
-                << error->message
-                << std::endl;
+        if (error)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] OpenPipeWireRemote failed: {}",
+                error->message
+            );
 
             g_error_free(error);
 
-            if (fd_list) {
+            if (fd_list)
+            {
                 g_object_unref(fd_list);
             }
 
             return false;
         }
 
-        if (!result || !fd_list) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "OpenPipeWireRemote returned no FD."
-                << std::endl;
+        if (!result || !fd_list)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] OpenPipeWireRemote returned no FD."
+            );
 
             if (result)
+            {
                 g_variant_unref(result);
+            }
 
             if (fd_list)
+            {
                 g_object_unref(fd_list);
+            }
 
             return false;
         }
@@ -389,11 +406,12 @@ private:
             &handle
         );
 
-        if (handle < 0) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "Invalid PipeWire FD handle."
-                << std::endl;
+        if (handle < 0)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] Invalid PipeWire FD handle."
+            );
 
             g_variant_unref(result);
             g_object_unref(fd_list);
@@ -410,12 +428,13 @@ private:
                 &fd_error
             );
 
-        if (fd_error) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "Failed to extract PipeWire FD: "
-                << fd_error->message
-                << std::endl;
+        if (fd_error)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] Failed to extract PipeWire FD: {}",
+                fd_error->message
+            );
 
             g_error_free(fd_error);
 
@@ -427,11 +446,10 @@ private:
 
         ctx->pipewire_fd = fd;
 
-        std::cout
-            << "[WaylandPortal] "
-               "PipeWire FD = "
-            << ctx->pipewire_fd
-            << std::endl;
+        std::println(
+            "[WaylandPortal] PipeWire FD = {}",
+            ctx->pipewire_fd
+        );
 
         g_variant_unref(result);
         g_object_unref(fd_list);
@@ -440,29 +458,22 @@ private:
     }
 
     static void onPortalResponse(
-        GDBusConnection* conn,
-        const gchar* sender_name,
-        const gchar* object_path,
-        const gchar* interface_name,
-        const gchar* signal_name,
+        GDBusConnection*,
+        const gchar*,
+        const gchar*,
+        const gchar*,
+        const gchar*,
         GVariant* params,
         gpointer user_data
-    ) {
+    )
+    {
         auto* ctx =
             static_cast<PortalContext*>(user_data);
 
         if (!ctx || !params)
+        {
             return;
-
-        /*
-         * We intentionally don't blindly interpret every Response
-         * signal as our own. The callback is subscribed to the
-         * portal Request interface, but other portal requests can
-         * exist in the same process/session.
-         *
-         * For this single-threaded state machine, only process
-         * responses while we're expecting the corresponding phase.
-         */
+        }
 
         guint response_code = 0;
         GVariant* results = nullptr;
@@ -474,16 +485,18 @@ private:
             &results
         );
 
-        if (response_code != 0) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "Portal request cancelled/failed. "
-                   "Response code = "
-                << response_code
-                << std::endl;
+        if (response_code != 0)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] Portal request cancelled/failed. Response code = {}",
+                response_code
+            );
 
             if (results)
+            {
                 g_variant_unref(results);
+            }
 
             fail(
                 ctx,
@@ -497,12 +510,9 @@ private:
          * ---------------------------------------------------------
          * CREATE SESSION
          * ---------------------------------------------------------
-         *
-         * CreateSession response contains:
-         *
-         *     session_handle : object path represented as string
          */
-        if (!ctx->create_session_done) {
+        if (!ctx->create_session_done)
+        {
             GVariant* session =
                 g_variant_lookup_value(
                     results,
@@ -510,13 +520,13 @@ private:
                     G_VARIANT_TYPE_STRING
                 );
 
-            if (!session) {
+            if (!session)
+            {
                 g_variant_unref(results);
 
                 fail(
                     ctx,
-                    "CreateSession succeeded but "
-                    "session_handle was missing."
+                    "CreateSession succeeded but session_handle was missing."
                 );
 
                 return;
@@ -533,7 +543,8 @@ private:
 
             g_variant_unref(session);
 
-            if (ctx->session_handle.empty()) {
+            if (ctx->session_handle.empty())
+            {
                 g_variant_unref(results);
 
                 fail(
@@ -546,20 +557,18 @@ private:
 
             ctx->create_session_done = true;
 
-            std::cout
-                << "[WaylandPortal] "
-                   "CreateSession succeeded."
-                << std::endl;
-
-            std::cout
-                << "[WaylandPortal] "
-                   "Session handle: "
-                << ctx->session_handle
-                << std::endl;
+            std::println(
+                "[WaylandPortal] CreateSession succeeded."
+            );
+            std::println(
+                "[WaylandPortal] Session handle: {}",
+                ctx->session_handle
+            );
 
             g_variant_unref(results);
 
-            if (!callSelectSources(ctx)) {
+            if (!callSelectSources(ctx))
+            {
                 fail(
                     ctx,
                     "Could not call SelectSources."
@@ -573,20 +582,19 @@ private:
          * ---------------------------------------------------------
          * SELECT SOURCES
          * ---------------------------------------------------------
-         *
-         * SelectSources normally has no interesting results.
          */
-        if (!ctx->select_sources_done) {
+        if (!ctx->select_sources_done)
+        {
             ctx->select_sources_done = true;
 
-            std::cout
-                << "[WaylandPortal] "
-                   "SelectSources succeeded."
-                << std::endl;
+            std::println(
+                "[WaylandPortal] SelectSources succeeded."
+            );
 
             g_variant_unref(results);
 
-            if (!callStart(ctx)) {
+            if (!callStart(ctx))
+            {
                 fail(
                     ctx,
                     "Could not call Start."
@@ -600,21 +608,9 @@ private:
          * ---------------------------------------------------------
          * START
          * ---------------------------------------------------------
-         *
-         * Start returns:
-         *
-         *     streams : a(ua{sv})
-         *
-         * Each stream is:
-         *
-         *     (node_id, properties)
-         *
-         * We specifically extract:
-         *
-         *     source_type
-         *     pipewire-serial
          */
-        if (!ctx->start_done) {
+        if (!ctx->start_done)
+        {
             GVariant* streams =
                 g_variant_lookup_value(
                     results,
@@ -622,7 +618,8 @@ private:
                     G_VARIANT_TYPE("a(ua{sv})")
                 );
 
-            if (!streams) {
+            if (!streams)
+            {
                 g_variant_unref(results);
 
                 fail(
@@ -652,9 +649,12 @@ private:
                     &node_id,
                     &properties
                 )
-            ) {
+            )
+            {
                 if (!properties)
+                {
                     continue;
+                }
 
                 uint32_t source_type = 0;
                 uint64_t pipewire_serial = 0;
@@ -673,61 +673,55 @@ private:
                         pipewire_serial
                     );
 
-                std::cout
-                    << "[WaylandPortal] "
-                       "Selected stream:"
-                    << std::endl;
+                std::println(
+                    "[WaylandPortal] Selected stream:"
+                );
+                std::println(
+                    "    node_id          = {}",
+                    node_id
+                );
 
-                std::cout
-                    << "    node_id          = "
-                    << node_id
-                    << std::endl;
-
-                if (has_source_type) {
+                if (has_source_type)
+                {
                     const char* source_name =
                         source_type == 1 ? "MONITOR" :
                         source_type == 2 ? "WINDOW" :
                         source_type == 4 ? "VIRTUAL" :
                                            "UNKNOWN";
 
-                    std::cout
-                        << "    source_type      = "
-                        << source_type
-                        << " ("
-                        << source_name
-                        << ")"
-                        << std::endl;
+                    std::println(
+                        "    source_type      = {} ({})",
+                        source_type,
+                        source_name
+                    );
                 }
-                else {
-                    std::cout
-                        << "    source_type      = "
-                           "<missing>"
-                        << std::endl;
+                else
+                {
+                    std::println(
+                        "    source_type      = <missing>"
+                    );
                 }
 
-                if (has_serial) {
-                    std::cout
-                        << "    pipewire-serial  = "
-                        << pipewire_serial
-                        << std::endl;
+                if (has_serial)
+                {
+                    std::println(
+                        "    pipewire-serial  = {}",
+                        pipewire_serial
+                    );
                 }
-                else {
-                    std::cout
-                        << "    pipewire-serial  = "
-                           "<missing>"
-                        << std::endl;
+                else
+                {
+                    std::println(
+                        "    pipewire-serial  = <missing>"
+                    );
                 }
 
-                /*
-                 * We requested exactly one source.
-                 *
-                 * Therefore the first returned stream is the
-                 * stream selected by the user.
-                 */
-                if (!found_stream) {
+                if (!found_stream)
+                {
                     ctx->node_id = node_id;
 
-                    if (has_serial) {
+                    if (has_serial)
+                    {
                         ctx->pipewire_serial =
                             pipewire_serial;
                     }
@@ -742,7 +736,8 @@ private:
             g_variant_unref(streams);
             g_variant_unref(results);
 
-            if (!found_stream || ctx->node_id == 0) {
+            if (!found_stream || ctx->node_id == 0)
+            {
                 fail(
                     ctx,
                     "Start returned no valid PipeWire stream."
@@ -751,32 +746,20 @@ private:
                 return;
             }
 
-            /*
-             * Important diagnostic:
-             *
-             * The portal must report MONITOR here when the user
-             * selects a monitor.
-             */
-            if (ctx->pipewire_serial == 0) {
-                std::cout
-                    << "[WaylandPortal] "
-                       "WARNING: pipewire-serial was not "
-                       "provided by this portal."
-                    << std::endl;
-
-                std::cout
-                    << "[WaylandPortal] "
-                       "Falling back to node_id."
-                    << std::endl;
+            if (ctx->pipewire_serial == 0)
+            {
+                std::println(
+                    "[WaylandPortal] WARNING: pipewire-serial was not provided by this portal."
+                );
+                std::println(
+                    "[WaylandPortal] Falling back to node_id."
+                );
             }
 
             ctx->start_done = true;
 
-            /*
-             * Now that Start succeeded and we have the selected
-             * stream, obtain the PipeWire remote FD.
-             */
-            if (!openPipeWireRemote(ctx)) {
+            if (!openPipeWireRemote(ctx))
+            {
                 fail(
                     ctx,
                     "Could not open PipeWire remote."
@@ -788,46 +771,37 @@ private:
             complete(
                 ctx,
                 SessionInfo{
-                    .pipewire_node_id =
-                        ctx->node_id,
-
-                    .pipewire_serial =
-                        ctx->pipewire_serial,
-
-                    .pipewire_fd =
-                        ctx->pipewire_fd,
-
-                    .dbus_conn =
-                        nullptr
+                    .pipewire_node_id = ctx->node_id,
+                    .pipewire_serial = ctx->pipewire_serial,
+                    .pipewire_fd = ctx->pipewire_fd,
+                    .dbus_conn = nullptr
                 }
             );
 
             return;
         }
 
-        /*
-         * Anything arriving after the state machine has completed
-         * is ignored.
-         */
-        if (results) {
+        if (results)
+        {
             g_variant_unref(results);
         }
     }
 
 public:
-    static std::optional<SessionInfo>
-    requestScreenCapture() {
+    static std::optional<SessionInfo> requestScreenCapture()
+    {
         GMainLoop* loop =
             g_main_loop_new(
                 nullptr,
                 FALSE
             );
 
-        if (!loop) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "Failed to create GLib main loop."
-                << std::endl;
+        if (!loop)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] Failed to create GLib main loop."
+            );
 
             return std::nullopt;
         }
@@ -846,21 +820,24 @@ public:
                 &connection_error
             );
 
-        if (!conn) {
-            if (connection_error) {
-                std::cerr
-                    << "[WaylandPortal] "
-                       "Failed to connect to session D-Bus: "
-                    << connection_error->message
-                    << std::endl;
+        if (!conn)
+        {
+            if (connection_error)
+            {
+                std::println(
+                    std::cerr,
+                    "[WaylandPortal] Failed to connect to session D-Bus: {}",
+                    connection_error->message
+                );
 
                 g_error_free(connection_error);
             }
-            else {
-                std::cerr
-                    << "[WaylandPortal] "
-                       "Failed to connect to session D-Bus."
-                    << std::endl;
+            else
+            {
+                std::println(
+                    std::cerr,
+                    "[WaylandPortal] Failed to connect to session D-Bus."
+                );
             }
 
             g_main_loop_unref(loop);
@@ -874,32 +851,17 @@ public:
             .promise = &promise
         };
 
-        /*
-         * Subscribe to Request::Response.
-         *
-         * The state machine below determines whether the response
-         * belongs to CreateSession, SelectSources, or Start.
-         */
         const guint subscription_id =
             g_dbus_connection_signal_subscribe(
                 conn,
-
                 PORTAL_BUS,
-
                 REQUEST_IFACE,
-
                 "Response",
-
                 nullptr,
-
                 nullptr,
-
                 G_DBUS_SIGNAL_FLAGS_NONE,
-
                 &WaylandPortal::onPortalResponse,
-
                 &ctx,
-
                 nullptr
             );
 
@@ -908,10 +870,9 @@ public:
          * CREATE SESSION
          * ---------------------------------------------------------
          */
-        std::cout
-            << "[WaylandPortal] "
-               "Creating ScreenCast session..."
-            << std::endl;
+        std::println(
+            "[WaylandPortal] Creating ScreenCast session..."
+        );
 
         GVariantBuilder options;
 
@@ -932,12 +893,6 @@ public:
             )
         );
 
-        /*
-         * CreateSession also accepts session_handle_token.
-         *
-         * This is useful with portal implementations that support
-         * explicitly generated session handles.
-         */
         const std::string session_token =
             makeToken("session");
 
@@ -954,37 +909,29 @@ public:
 
         g_dbus_connection_call(
             conn,
-
             PORTAL_BUS,
             PORTAL_PATH,
-
             SCREENCAST_IFACE,
             "CreateSession",
-
             g_variant_new(
                 "(a{sv})",
                 &options
             ),
-
             nullptr,
-
             G_DBUS_CALL_FLAGS_NONE,
-
             -1,
-
             nullptr,
-
             nullptr,
-
             &create_error
         );
 
-        if (create_error) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "CreateSession failed: "
-                << create_error->message
-                << std::endl;
+        if (create_error)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] CreateSession failed: {}",
+                create_error->message
+            );
 
             g_error_free(create_error);
 
@@ -999,46 +946,35 @@ public:
             return std::nullopt;
         }
 
-        std::cout
-            << "[WaylandPortal] "
-               "Waiting for monitor selection..."
-            << std::endl;
+        std::println(
+            "[WaylandPortal] Waiting for monitor selection..."
+        );
 
-        /*
-         * GLib's default main context must run for the portal
-         * Response signals to arrive.
-         */
         std::jthread glib_thread(
-            [loop] {
+            [loop]
+            {
                 g_main_loop_run(loop);
             }
         );
 
-        /*
-         * Wait until:
-         *
-         * CreateSession
-         * -> SelectSources
-         * -> Start
-         * -> OpenPipeWireRemote
-         *
-         * or until the user cancels/times out.
-         */
         const auto status =
             future.wait_for(
                 std::chrono::seconds(60)
             );
 
-        if (status == std::future_status::timeout) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "Timed out waiting for portal."
-                << std::endl;
+        if (status == std::future_status::timeout)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] Timed out waiting for portal."
+            );
 
             g_main_loop_quit(loop);
 
             if (glib_thread.joinable())
+            {
                 glib_thread.join();
+            }
 
             g_dbus_connection_signal_unsubscribe(
                 conn,
@@ -1054,74 +990,62 @@ public:
         SessionInfo info =
             future.get();
 
-        /*
-         * Stop GLib event loop.
-         */
         g_main_loop_quit(loop);
 
         if (glib_thread.joinable())
+        {
             glib_thread.join();
+        }
 
-        /*
-         * Stop receiving portal responses.
-         */
         g_dbus_connection_signal_unsubscribe(
             conn,
             subscription_id
         );
 
-        /*
-         * Keep the connection alive in SessionInfo.
-         *
-         * The caller owns the reference returned by g_bus_get_sync().
-         */
         info.dbus_conn = conn;
 
         g_main_loop_unref(loop);
 
-        if (info.pipewire_fd < 0) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "Invalid PipeWire FD."
-                << std::endl;
+        if (info.pipewire_fd < 0)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] Invalid PipeWire FD."
+            );
 
             g_object_unref(conn);
 
             return std::nullopt;
         }
 
-        if (info.pipewire_node_id == 0) {
-            std::cerr
-                << "[WaylandPortal] "
-                   "Invalid PipeWire node ID."
-                << std::endl;
+        if (info.pipewire_node_id == 0)
+        {
+            std::println(
+                std::cerr,
+                "[WaylandPortal] Invalid PipeWire node ID."
+            );
 
             g_object_unref(conn);
 
             return std::nullopt;
         }
 
-        std::cout
-            << "[WaylandPortal] "
-               "ScreenCast session ready."
-            << std::endl;
-
-        std::cout
-            << "    node_id         = "
-            << info.pipewire_node_id
-            << std::endl;
-
-        std::cout
-            << "    pipewire_serial = "
-            << info.pipewire_serial
-            << std::endl;
-
-        std::cout
-            << "    pipewire_fd     = "
-            << info.pipewire_fd
-            << std::endl;
+        std::println(
+            "[WaylandPortal] ScreenCast session ready."
+        );
+        std::println(
+            "    node_id         = {}",
+            info.pipewire_node_id
+        );
+        std::println(
+            "    pipewire_serial = {}",
+            info.pipewire_serial
+        );
+        std::println(
+            "    pipewire_fd     = {}",
+            info.pipewire_fd
+        );
 
         return info;
     }
 };
-

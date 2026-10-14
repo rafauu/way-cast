@@ -9,7 +9,7 @@
                 "plugins-good",
                 "plugins-bad",
                 "plugins-ugly",
-                "vpx",
+                "nvcodec",
                 "webrtc"
             ]
         },
