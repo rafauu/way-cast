@@ -15,6 +15,7 @@
         },
         "libnice-gst",
         "gst-plugin-webrtc",
-        "pipewire"
+        "pipewire",
+        "quill"
     ]
 }

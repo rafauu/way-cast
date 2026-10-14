@@ -22,6 +22,7 @@ set(CMAKE_LINKER_TYPE MOLD)
 
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
+find_package(quill CONFIG REQUIRED)
 
 pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0)
 pkg_check_modules(GST_APP REQUIRED IMPORTED_TARGET gstreamer-app-1.0)
@@ -107,6 +108,7 @@ target_sources(${PROJECT_NAME}
       src/Environment.cppm
       src/GstPipelineManager.cppm
       src/GstRaii.cppm
+      src/Logger.cppm
       src/WaylandPortal.cppm
 )
 
@@ -119,6 +121,7 @@ target_link_libraries(${PROJECT_NAME}
     PkgConfig::GST_WEBRTC
     PkgConfig::GST_SDP
     PkgConfig::GIO
+    quill::quill
 )
 
 # -----------------------------------------------------------------------------

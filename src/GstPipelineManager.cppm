@@ -5,6 +5,7 @@ module;
 export module GstPipelineManager;
 
 import GstRaii;
+import Logger;
 import WaylandPortal;
 import std;
 
@@ -14,6 +15,8 @@ public:
     GstPipelineManager()
     {
         gst_init(nullptr, nullptr);
+
+        Logger::info("[GStreamer] Initializing pipeline manager.");
 
         mediaThread = std::jthread(
             [this](std::stop_token stopToken) {
@@ -26,7 +29,6 @@ public:
 
     GstPipelineManager(const GstPipelineManager&) = delete;
     GstPipelineManager& operator=(const GstPipelineManager&) = delete;
-
     GstPipelineManager(GstPipelineManager&&) = delete;
     GstPipelineManager& operator=(GstPipelineManager&&) = delete;
 
@@ -35,14 +37,14 @@ private:
 
     void mediaLoop(std::stop_token stopToken)
     {
+        Logger::info("[GStreamer] Requesting Wayland screen-capture session.");
+
         auto portalSession = WaylandPortal::requestScreenCapture();
 
         if (not portalSession)
         {
-            std::println(
-                std::cerr,
-                "[GStreamer] Failed to obtain PipeWire "
-                "screen-capture session."
+            Logger::error(
+                "[GStreamer] Failed to obtain PipeWire screen-capture session."
             );
             return;
         }
@@ -52,22 +54,19 @@ private:
             portalSession->pipewire_node_id
         );
 
-        if (not pipeline) {
-            std::println(
-                std::cerr,
-                "[GStreamer] Pipeline creation failed."
-            );
+        if (not pipeline)
+        {
+            Logger::error("[GStreamer] Pipeline creation failed.");
             return;
         }
 
-        GstRaii::GMainLoopPtr mainLoop {g_main_loop_new(nullptr, FALSE)};
+        GstRaii::GMainLoopPtr mainLoop{
+            g_main_loop_new(nullptr, FALSE)
+        };
 
         if (not mainLoop)
         {
-            std::println(
-                std::cerr,
-                "[GStreamer] Failed to create GLib main loop."
-            );
+            Logger::error("[GStreamer] Failed to create GLib main loop.");
             return;
         }
 
@@ -79,14 +78,13 @@ private:
 
         if (state == GST_STATE_CHANGE_FAILURE)
         {
-            std::println(
-                std::cerr,
+            Logger::error(
                 "[GStreamer] Failed to set pipeline to PLAYING."
             );
             return;
         }
 
-        std::println("[GStreamer] Screen-sharing pipeline started.");
+        Logger::info("[GStreamer] Screen-sharing pipeline started.");
 
         std::stop_callback stopCallback(
             stopToken,
@@ -100,7 +98,7 @@ private:
             g_main_loop_run(mainLoop.get());
         }
 
-        std::println("[GStreamer] Pipeline resources released.");
+        Logger::info("[GStreamer] Pipeline resources released.");
     }
 
     GstRaii::GstPipelineElementPtr buildPipeline(
@@ -111,20 +109,18 @@ private:
         const std::string pipelineDescription =
             std::format(
                 "pipewiresrc fd={} path={} do-timestamp=true "
-                "! queue max-size-buffers=2 max-size-bytes=0 max-size-time=0 leaky=downstream "
+                "! queue max-size-buffers=1 max-size-bytes=0 max-size-time=0 leaky=downstream "
                 "! videoconvert "
                 "! videoscale "
-                "! video/x-raw,format=NV12,width=1920,height=1080 "
-                "! queue max-size-buffers=2 max-size-bytes=0 max-size-time=0 leaky=downstream "
+                "! video/x-raw,format=NV12 "
+                "! queue max-size-buffers=1 max-size-bytes=0 max-size-time=0 leaky=downstream "
               #if WAYCAST_NVIDIA_OVER_VAAPI
                 "! nvh264enc rc-mode=constqp qp-const-i=23 qp-const-p=23 preset=low-latency-hq gop-size=60 "
               #else
                 "! vah264lpenc rate-control=cqp qpi=23 qpp=23 cabac=false dct8x8=false b-frames=0 key-int-max=60 "
               #endif
-                "! queue max-size-buffers=2 max-size-bytes=0 max-size-time=0 leaky=downstream "
                 "! h264parse config-interval=-1 "
                 "! video/x-h264,profile=constrained-baseline,stream-format=avc,alignment=au "
-                "! queue max-size-buffers=2 max-size-bytes=0 max-size-time=0 leaky=downstream "
                 "! webrtcsink "
                 "run-signalling-server=true "
                 "signalling-server-host=0.0.0.0 "
@@ -142,19 +138,23 @@ private:
                 WAYCAST_WEB_DIR
             );
 
-        std::println("[GStreamer] Pipeline:\n{}", pipelineDescription);
+        Logger::debug(
+            "[GStreamer] Pipeline description:\n{}",
+            pipelineDescription
+        );
 
         GstRaii::GErrorPtr error;
 
-        GstRaii::GstPipelineElementPtr pipeline {gst_parse_launch(
-            pipelineDescription.c_str(),
-            std::out_ptr(error)
-        )};
+        GstRaii::GstPipelineElementPtr pipeline{
+            gst_parse_launch(
+                pipelineDescription.c_str(),
+                std::out_ptr(error)
+            )
+        };
 
         if (error)
         {
-            std::println(
-                std::cerr,
+            Logger::error(
                 "[GStreamer] Failed to create pipeline: {}",
                 error->message
             );
@@ -164,8 +164,7 @@ private:
 
         if (not pipeline)
         {
-            std::println(
-                std::cerr,
+            Logger::error(
                 "[GStreamer] gst_parse_launch returned nullptr."
             );
 
@@ -175,4 +174,3 @@ private:
         return pipeline;
     }
 };
-

@@ -5,6 +5,7 @@ module;
 
 export module WaylandPortal;
 
+import Logger;
 import std;
 
 export class WaylandPortal
@@ -13,13 +14,8 @@ public:
     struct SessionInfo
     {
         uint32_t pipewire_node_id{0};
-
-        // Preferred identifier for PipeWire stream targeting.
-        // This corresponds to PipeWire object.serial.
         uint64_t pipewire_serial{0};
-
         int pipewire_fd{-1};
-
         GDBusConnection* dbus_conn{nullptr};
     };
 
@@ -40,16 +36,11 @@ private:
     {
         GDBusConnection* conn{nullptr};
         GMainLoop* loop{nullptr};
-
         std::promise<SessionInfo>* promise{nullptr};
-
         std::string session_handle{};
-
         uint32_t node_id{0};
         uint64_t pipewire_serial{0};
-
         int pipewire_fd{-1};
-
         bool create_session_done{false};
         bool select_sources_done{false};
         bool start_done{false};
@@ -66,10 +57,7 @@ private:
         return std::format("{}_{}", prefix, id);
     }
 
-    static void complete(
-        PortalContext* ctx,
-        SessionInfo info
-    )
+    static void complete(PortalContext* ctx, SessionInfo info)
     {
         if (ctx->promise_completed)
         {
@@ -93,35 +81,19 @@ private:
         }
     }
 
-    static void fail(
-        PortalContext* ctx,
-        const char* reason
-    )
+    static void fail(PortalContext* ctx, const char* reason)
     {
-        std::println(
-            std::cerr,
-            "[WaylandPortal] {}",
-            reason
-        );
-
-        complete(
-            ctx,
-            SessionInfo{}
-        );
+        Logger::error("[WaylandPortal] {}", reason);
+        complete(ctx, SessionInfo{});
     }
 
     static bool getUint32Property(
         GVariant* dict,
         const char* key,
-        uint32_t& out
-    )
+        uint32_t& out)
     {
-        GVariant* value =
-            g_variant_lookup_value(
-                dict,
-                key,
-                G_VARIANT_TYPE_UINT32
-            );
+        GVariant* value = g_variant_lookup_value(
+            dict, key, G_VARIANT_TYPE_UINT32);
 
         if (!value)
         {
@@ -129,24 +101,17 @@ private:
         }
 
         out = g_variant_get_uint32(value);
-
         g_variant_unref(value);
-
         return true;
     }
 
     static bool getUint64Property(
         GVariant* dict,
         const char* key,
-        uint64_t& out
-    )
+        uint64_t& out)
     {
-        GVariant* value =
-            g_variant_lookup_value(
-                dict,
-                key,
-                G_VARIANT_TYPE_UINT64
-            );
+        GVariant* value = g_variant_lookup_value(
+            dict, key, G_VARIANT_TYPE_UINT64);
 
         if (!value)
         {
@@ -154,68 +119,35 @@ private:
         }
 
         out = g_variant_get_uint64(value);
-
         g_variant_unref(value);
-
         return true;
     }
 
-    static bool callSelectSources(
-        PortalContext* ctx
-    )
+    static bool callSelectSources(PortalContext* ctx)
     {
-        std::println(
-            "[WaylandPortal] SelectSources: requesting monitor only..."
-        );
+        Logger::info(
+            "[WaylandPortal] SelectSources: requesting monitor only...");
 
         GVariantBuilder options;
+        g_variant_builder_init(&options, G_VARIANT_TYPE_VARDICT);
 
-        g_variant_builder_init(
-            &options,
-            G_VARIANT_TYPE_VARDICT
-        );
+        const std::string token = makeToken("select");
 
-        const std::string token =
-            makeToken("select");
-
-        /*
-         * 1 = MONITOR
-         *
-         * We deliberately do NOT request WINDOW here.
-         * This removes any ambiguity while debugging screen capture.
-         */
+        // 1 = MONITOR. Only monitor capture is requested.
         g_variant_builder_add(
-            &options,
-            "{sv}",
-            "types",
-            g_variant_new_uint32(1)
-        );
-
-        /*
-         * Only one source.
-         */
-        g_variant_builder_add(
-            &options,
-            "{sv}",
-            "multiple",
-            g_variant_new_boolean(FALSE)
-        );
+            &options, "{sv}", "types", g_variant_new_uint32(1));
 
         g_variant_builder_add(
-            &options,
-            "{sv}",
-            "handle_token",
-            g_variant_new_string(token.c_str())
-        );
+            &options, "{sv}", "multiple", g_variant_new_boolean(FALSE));
+
+        g_variant_builder_add(
+            &options, "{sv}", "handle_token",
+            g_variant_new_string(token.c_str()));
 
         GError* error = nullptr;
 
-        GVariant* params =
-            g_variant_new(
-                "(oa{sv})",
-                ctx->session_handle.c_str(),
-                &options
-            );
+        GVariant* params = g_variant_new(
+            "(oa{sv})", ctx->session_handle.c_str(), &options);
 
         g_dbus_connection_call(
             ctx->conn,
@@ -229,61 +161,36 @@ private:
             -1,
             nullptr,
             nullptr,
-            &error
-        );
+            &error);
 
         if (error)
         {
-            std::println(
-                std::cerr,
+            Logger::error(
                 "[WaylandPortal] SelectSources failed: {}",
-                error->message
-            );
-
+                error->message);
             g_error_free(error);
-
             return false;
         }
 
         return true;
     }
 
-    static bool callStart(
-        PortalContext* ctx
-    )
+    static bool callStart(PortalContext* ctx)
     {
-        std::println(
-            "[WaylandPortal] Start: opening source-selection dialog..."
-        );
+        Logger::info(
+            "[WaylandPortal] Start: opening source-selection dialog...");
 
         GVariantBuilder options;
+        g_variant_builder_init(&options, G_VARIANT_TYPE_VARDICT);
 
-        g_variant_builder_init(
-            &options,
-            G_VARIANT_TYPE_VARDICT
-        );
-
-        const std::string token =
-            makeToken("start");
+        const std::string token = makeToken("start");
 
         g_variant_builder_add(
-            &options,
-            "{sv}",
-            "handle_token",
-            g_variant_new_string(token.c_str())
-        );
+            &options, "{sv}", "handle_token",
+            g_variant_new_string(token.c_str()));
 
-        /*
-         * Empty parent_window is valid for a headless/non-GUI
-         * application.
-         */
-        GVariant* params =
-            g_variant_new(
-                "(osa{sv})",
-                ctx->session_handle.c_str(),
-                "",
-                &options
-            );
+        GVariant* params = g_variant_new(
+            "(osa{sv})", ctx->session_handle.c_str(), "", &options);
 
         GError* error = nullptr;
 
@@ -299,44 +206,25 @@ private:
             -1,
             nullptr,
             nullptr,
-            &error
-        );
+            &error);
 
         if (error)
         {
-            std::println(
-                std::cerr,
+            Logger::error(
                 "[WaylandPortal] Start failed: {}",
-                error->message
-            );
-
+                error->message);
             g_error_free(error);
-
             return false;
         }
 
         return true;
     }
 
-    static bool openPipeWireRemote(
-        PortalContext* ctx
-    )
+    static bool openPipeWireRemote(PortalContext* ctx)
     {
-        std::println(
-            "[WaylandPortal] Opening PipeWire remote..."
-        );
+        Logger::info("[WaylandPortal] Opening PipeWire remote...");
 
-        /*
-         * OpenPipeWireRemote takes:
-         *
-         *     (oa{sv})
-         *
-         * and returns:
-         *
-         *     (h)
-         */
         GError* error = nullptr;
-
         GUnixFDList* fd_list = nullptr;
 
         GVariant* result =
@@ -347,27 +235,20 @@ private:
                 SCREENCAST_IFACE,
                 "OpenPipeWireRemote",
                 g_variant_new(
-                    "(oa{sv})",
-                    ctx->session_handle.c_str(),
-                    nullptr
-                ),
+                    "(oa{sv})", ctx->session_handle.c_str(), nullptr),
                 G_VARIANT_TYPE("(h)"),
                 G_DBUS_CALL_FLAGS_NONE,
                 -1,
                 nullptr,
                 &fd_list,
                 nullptr,
-                &error
-            );
+                &error);
 
         if (error)
         {
-            std::println(
-                std::cerr,
+            Logger::error(
                 "[WaylandPortal] OpenPipeWireRemote failed: {}",
-                error->message
-            );
-
+                error->message);
             g_error_free(error);
 
             if (fd_list)
@@ -380,10 +261,8 @@ private:
 
         if (!result || !fd_list)
         {
-            std::println(
-                std::cerr,
-                "[WaylandPortal] OpenPipeWireRemote returned no FD."
-            );
+            Logger::error(
+                "[WaylandPortal] OpenPipeWireRemote returned no FD.");
 
             if (result)
             {
@@ -399,61 +278,39 @@ private:
         }
 
         gint32 handle = -1;
-
-        g_variant_get(
-            result,
-            "(h)",
-            &handle
-        );
+        g_variant_get(result, "(h)", &handle);
 
         if (handle < 0)
         {
-            std::println(
-                std::cerr,
-                "[WaylandPortal] Invalid PipeWire FD handle."
-            );
-
+            Logger::error("[WaylandPortal] Invalid PipeWire FD handle.");
             g_variant_unref(result);
             g_object_unref(fd_list);
-
             return false;
         }
 
         GError* fd_error = nullptr;
 
-        const int fd =
-            g_unix_fd_list_get(
-                fd_list,
-                handle,
-                &fd_error
-            );
+        const int fd = g_unix_fd_list_get(
+            fd_list, handle, &fd_error);
 
         if (fd_error)
         {
-            std::println(
-                std::cerr,
+            Logger::error(
                 "[WaylandPortal] Failed to extract PipeWire FD: {}",
-                fd_error->message
-            );
-
+                fd_error->message);
             g_error_free(fd_error);
-
             g_variant_unref(result);
             g_object_unref(fd_list);
-
             return false;
         }
 
         ctx->pipewire_fd = fd;
 
-        std::println(
-            "[WaylandPortal] PipeWire FD = {}",
-            ctx->pipewire_fd
-        );
+        Logger::info(
+            "[WaylandPortal] PipeWire FD = {}", ctx->pipewire_fd);
 
         g_variant_unref(result);
         g_object_unref(fd_list);
-
         return true;
     }
 
@@ -464,11 +321,9 @@ private:
         const gchar*,
         const gchar*,
         GVariant* params,
-        gpointer user_data
-    )
+        gpointer user_data)
     {
-        auto* ctx =
-            static_cast<PortalContext*>(user_data);
+        auto* ctx = static_cast<PortalContext*>(user_data);
 
         if (!ctx || !params)
         {
@@ -478,65 +333,40 @@ private:
         guint response_code = 0;
         GVariant* results = nullptr;
 
-        g_variant_get(
-            params,
-            "(u@a{sv})",
-            &response_code,
-            &results
-        );
+        g_variant_get(params, "(u@a{sv})", &response_code, &results);
 
         if (response_code != 0)
         {
-            std::println(
-                std::cerr,
-                "[WaylandPortal] Portal request cancelled/failed. Response code = {}",
-                response_code
-            );
+            Logger::error(
+                "[WaylandPortal] Portal request cancelled/failed. "
+                "Response code = {}",
+                response_code);
 
             if (results)
             {
                 g_variant_unref(results);
             }
 
-            fail(
-                ctx,
-                "Portal request was cancelled or failed."
-            );
-
+            fail(ctx, "Portal request was cancelled or failed.");
             return;
         }
 
-        /*
-         * ---------------------------------------------------------
-         * CREATE SESSION
-         * ---------------------------------------------------------
-         */
+        // CREATE SESSION
         if (!ctx->create_session_done)
         {
-            GVariant* session =
-                g_variant_lookup_value(
-                    results,
-                    "session_handle",
-                    G_VARIANT_TYPE_STRING
-                );
+            GVariant* session = g_variant_lookup_value(
+                results, "session_handle", G_VARIANT_TYPE_STRING);
 
             if (!session)
             {
                 g_variant_unref(results);
-
-                fail(
-                    ctx,
-                    "CreateSession succeeded but session_handle was missing."
-                );
-
+                fail(ctx,
+                    "CreateSession succeeded but session_handle was missing.");
                 return;
             }
 
             const gchar* session_handle =
-                g_variant_get_string(
-                    session,
-                    nullptr
-                );
+                g_variant_get_string(session, nullptr);
 
             ctx->session_handle =
                 session_handle ? session_handle : "";
@@ -546,110 +376,66 @@ private:
             if (ctx->session_handle.empty())
             {
                 g_variant_unref(results);
-
-                fail(
-                    ctx,
-                    "CreateSession returned an empty session handle."
-                );
-
+                fail(ctx, "CreateSession returned an empty session handle.");
                 return;
             }
 
             ctx->create_session_done = true;
 
-            std::println(
-                "[WaylandPortal] CreateSession succeeded."
-            );
-            std::println(
+            Logger::info("[WaylandPortal] CreateSession succeeded.");
+            Logger::debug(
                 "[WaylandPortal] Session handle: {}",
-                ctx->session_handle
-            );
+                ctx->session_handle);
 
             g_variant_unref(results);
 
             if (!callSelectSources(ctx))
             {
-                fail(
-                    ctx,
-                    "Could not call SelectSources."
-                );
+                fail(ctx, "Could not call SelectSources.");
             }
 
             return;
         }
 
-        /*
-         * ---------------------------------------------------------
-         * SELECT SOURCES
-         * ---------------------------------------------------------
-         */
+        // SELECT SOURCES
         if (!ctx->select_sources_done)
         {
             ctx->select_sources_done = true;
 
-            std::println(
-                "[WaylandPortal] SelectSources succeeded."
-            );
+            Logger::info("[WaylandPortal] SelectSources succeeded.");
 
             g_variant_unref(results);
 
             if (!callStart(ctx))
             {
-                fail(
-                    ctx,
-                    "Could not call Start."
-                );
+                fail(ctx, "Could not call Start.");
             }
 
             return;
         }
 
-        /*
-         * ---------------------------------------------------------
-         * START
-         * ---------------------------------------------------------
-         */
+        // START
         if (!ctx->start_done)
         {
-            GVariant* streams =
-                g_variant_lookup_value(
-                    results,
-                    "streams",
-                    G_VARIANT_TYPE("a(ua{sv})")
-                );
+            GVariant* streams = g_variant_lookup_value(
+                results, "streams", G_VARIANT_TYPE("a(ua{sv})"));
 
             if (!streams)
             {
                 g_variant_unref(results);
-
-                fail(
-                    ctx,
-                    "Start succeeded but no streams were returned."
-                );
-
+                fail(ctx, "Start succeeded but no streams were returned.");
                 return;
             }
 
             GVariantIter iter;
-
-            g_variant_iter_init(
-                &iter,
-                streams
-            );
+            g_variant_iter_init(&iter, streams);
 
             guint32 node_id = 0;
             GVariant* properties = nullptr;
-
             bool found_stream = false;
 
-            while (
-                g_variant_iter_loop(
-                    &iter,
-                    "(u@a{sv})",
-                    &node_id,
-                    &properties
-                )
-            )
+            while (g_variant_iter_loop(
+                &iter, "(u@a{sv})", &node_id, &properties))
             {
                 if (!properties)
                 {
@@ -659,27 +445,15 @@ private:
                 uint32_t source_type = 0;
                 uint64_t pipewire_serial = 0;
 
-                const bool has_source_type =
-                    getUint32Property(
-                        properties,
-                        "source_type",
-                        source_type
-                    );
+                const bool has_source_type = getUint32Property(
+                    properties, "source_type", source_type);
 
-                const bool has_serial =
-                    getUint64Property(
-                        properties,
-                        "pipewire-serial",
-                        pipewire_serial
-                    );
+                const bool has_serial = getUint64Property(
+                    properties, "pipewire-serial", pipewire_serial);
 
-                std::println(
-                    "[WaylandPortal] Selected stream:"
-                );
-                std::println(
-                    "    node_id          = {}",
-                    node_id
-                );
+                Logger::info(
+                    "[WaylandPortal] Selected stream: node_id={}",
+                    node_id);
 
                 if (has_source_type)
                 {
@@ -689,31 +463,26 @@ private:
                         source_type == 4 ? "VIRTUAL" :
                                            "UNKNOWN";
 
-                    std::println(
-                        "    source_type      = {} ({})",
-                        source_type,
-                        source_name
-                    );
+                    Logger::info(
+                        "[WaylandPortal] source_type={} ({})",
+                        source_type, source_name);
                 }
                 else
                 {
-                    std::println(
-                        "    source_type      = <missing>"
-                    );
+                    Logger::warning(
+                        "[WaylandPortal] source_type=<missing>");
                 }
 
                 if (has_serial)
                 {
-                    std::println(
-                        "    pipewire-serial  = {}",
-                        pipewire_serial
-                    );
+                    Logger::info(
+                        "[WaylandPortal] pipewire-serial={}",
+                        pipewire_serial);
                 }
                 else
                 {
-                    std::println(
-                        "    pipewire-serial  = <missing>"
-                    );
+                    Logger::warning(
+                        "[WaylandPortal] pipewire-serial=<missing>");
                 }
 
                 if (!found_stream)
@@ -722,8 +491,7 @@ private:
 
                     if (has_serial)
                     {
-                        ctx->pipewire_serial =
-                            pipewire_serial;
+                        ctx->pipewire_serial = pipewire_serial;
                     }
 
                     found_stream = true;
@@ -738,33 +506,24 @@ private:
 
             if (!found_stream || ctx->node_id == 0)
             {
-                fail(
-                    ctx,
-                    "Start returned no valid PipeWire stream."
-                );
-
+                fail(ctx, "Start returned no valid PipeWire stream.");
                 return;
             }
 
             if (ctx->pipewire_serial == 0)
             {
-                std::println(
-                    "[WaylandPortal] WARNING: pipewire-serial was not provided by this portal."
-                );
-                std::println(
-                    "[WaylandPortal] Falling back to node_id."
-                );
+                Logger::warning(
+                    "[WaylandPortal] pipewire-serial was not provided "
+                    "by this portal.");
+                Logger::warning(
+                    "[WaylandPortal] Falling back to node_id.");
             }
 
             ctx->start_done = true;
 
             if (!openPipeWireRemote(ctx))
             {
-                fail(
-                    ctx,
-                    "Could not open PipeWire remote."
-                );
-
+                fail(ctx, "Could not open PipeWire remote.");
                 return;
             }
 
@@ -775,8 +534,7 @@ private:
                     .pipewire_serial = ctx->pipewire_serial,
                     .pipewire_fd = ctx->pipewire_fd,
                     .dbus_conn = nullptr
-                }
-            );
+                });
 
             return;
         }
@@ -790,58 +548,39 @@ private:
 public:
     static std::optional<SessionInfo> requestScreenCapture()
     {
-        GMainLoop* loop =
-            g_main_loop_new(
-                nullptr,
-                FALSE
-            );
+        GMainLoop* loop = g_main_loop_new(nullptr, FALSE);
 
         if (!loop)
         {
-            std::println(
-                std::cerr,
-                "[WaylandPortal] Failed to create GLib main loop."
-            );
-
+            Logger::error(
+                "[WaylandPortal] Failed to create GLib main loop.");
             return std::nullopt;
         }
 
         std::promise<SessionInfo> promise;
-
-        auto future =
-            promise.get_future();
+        auto future = promise.get_future();
 
         GError* connection_error = nullptr;
 
-        GDBusConnection* conn =
-            g_bus_get_sync(
-                G_BUS_TYPE_SESSION,
-                nullptr,
-                &connection_error
-            );
+        GDBusConnection* conn = g_bus_get_sync(
+            G_BUS_TYPE_SESSION, nullptr, &connection_error);
 
         if (!conn)
         {
             if (connection_error)
             {
-                std::println(
-                    std::cerr,
+                Logger::error(
                     "[WaylandPortal] Failed to connect to session D-Bus: {}",
-                    connection_error->message
-                );
-
+                    connection_error->message);
                 g_error_free(connection_error);
             }
             else
             {
-                std::println(
-                    std::cerr,
-                    "[WaylandPortal] Failed to connect to session D-Bus."
-                );
+                Logger::error(
+                    "[WaylandPortal] Failed to connect to session D-Bus.");
             }
 
             g_main_loop_unref(loop);
-
             return std::nullopt;
         }
 
@@ -862,48 +601,26 @@ public:
                 G_DBUS_SIGNAL_FLAGS_NONE,
                 &WaylandPortal::onPortalResponse,
                 &ctx,
-                nullptr
-            );
+                nullptr);
 
-        /*
-         * ---------------------------------------------------------
-         * CREATE SESSION
-         * ---------------------------------------------------------
-         */
-        std::println(
-            "[WaylandPortal] Creating ScreenCast session..."
-        );
+        // CREATE SESSION
+        Logger::info(
+            "[WaylandPortal] Creating ScreenCast session...");
 
         GVariantBuilder options;
+        g_variant_builder_init(&options, G_VARIANT_TYPE_VARDICT);
 
-        g_variant_builder_init(
-            &options,
-            G_VARIANT_TYPE_VARDICT
-        );
-
-        const std::string create_token =
-            makeToken("create");
+        const std::string create_token = makeToken("create");
 
         g_variant_builder_add(
-            &options,
-            "{sv}",
-            "handle_token",
-            g_variant_new_string(
-                create_token.c_str()
-            )
-        );
+            &options, "{sv}", "handle_token",
+            g_variant_new_string(create_token.c_str()));
 
-        const std::string session_token =
-            makeToken("session");
+        const std::string session_token = makeToken("session");
 
         g_variant_builder_add(
-            &options,
-            "{sv}",
-            "session_handle_token",
-            g_variant_new_string(
-                session_token.c_str()
-            )
-        );
+            &options, "{sv}", "session_handle_token",
+            g_variant_new_string(session_token.c_str()));
 
         GError* create_error = nullptr;
 
@@ -913,61 +630,45 @@ public:
             PORTAL_PATH,
             SCREENCAST_IFACE,
             "CreateSession",
-            g_variant_new(
-                "(a{sv})",
-                &options
-            ),
+            g_variant_new("(a{sv})", &options),
             nullptr,
             G_DBUS_CALL_FLAGS_NONE,
             -1,
             nullptr,
             nullptr,
-            &create_error
-        );
+            &create_error);
 
         if (create_error)
         {
-            std::println(
-                std::cerr,
+            Logger::error(
                 "[WaylandPortal] CreateSession failed: {}",
-                create_error->message
-            );
+                create_error->message);
 
             g_error_free(create_error);
 
             g_dbus_connection_signal_unsubscribe(
-                conn,
-                subscription_id
-            );
+                conn, subscription_id);
 
             g_object_unref(conn);
             g_main_loop_unref(loop);
-
             return std::nullopt;
         }
 
-        std::println(
-            "[WaylandPortal] Waiting for monitor selection..."
-        );
+        Logger::info(
+            "[WaylandPortal] Waiting for monitor selection...");
 
-        std::jthread glib_thread(
-            [loop]
-            {
-                g_main_loop_run(loop);
-            }
-        );
+        std::jthread glib_thread([loop]
+        {
+            g_main_loop_run(loop);
+        });
 
         const auto status =
-            future.wait_for(
-                std::chrono::seconds(60)
-            );
+            future.wait_for(std::chrono::seconds(60));
 
         if (status == std::future_status::timeout)
         {
-            std::println(
-                std::cerr,
-                "[WaylandPortal] Timed out waiting for portal."
-            );
+            Logger::error(
+                "[WaylandPortal] Timed out waiting for portal.");
 
             g_main_loop_quit(loop);
 
@@ -977,18 +678,14 @@ public:
             }
 
             g_dbus_connection_signal_unsubscribe(
-                conn,
-                subscription_id
-            );
+                conn, subscription_id);
 
             g_object_unref(conn);
             g_main_loop_unref(loop);
-
             return std::nullopt;
         }
 
-        SessionInfo info =
-            future.get();
+        SessionInfo info = future.get();
 
         g_main_loop_quit(loop);
 
@@ -998,9 +695,7 @@ public:
         }
 
         g_dbus_connection_signal_unsubscribe(
-            conn,
-            subscription_id
-        );
+            conn, subscription_id);
 
         info.dbus_conn = conn;
 
@@ -1008,43 +703,22 @@ public:
 
         if (info.pipewire_fd < 0)
         {
-            std::println(
-                std::cerr,
-                "[WaylandPortal] Invalid PipeWire FD."
-            );
-
+            Logger::error("[WaylandPortal] Invalid PipeWire FD.");
             g_object_unref(conn);
-
             return std::nullopt;
         }
 
         if (info.pipewire_node_id == 0)
         {
-            std::println(
-                std::cerr,
-                "[WaylandPortal] Invalid PipeWire node ID."
-            );
-
+            Logger::error("[WaylandPortal] Invalid PipeWire node ID.");
             g_object_unref(conn);
-
             return std::nullopt;
         }
 
-        std::println(
-            "[WaylandPortal] ScreenCast session ready."
-        );
-        std::println(
-            "    node_id         = {}",
-            info.pipewire_node_id
-        );
-        std::println(
-            "    pipewire_serial = {}",
-            info.pipewire_serial
-        );
-        std::println(
-            "    pipewire_fd     = {}",
-            info.pipewire_fd
-        );
+        Logger::info("[WaylandPortal] ScreenCast session ready.");
+        Logger::info("    node_id         = {}", info.pipewire_node_id);
+        Logger::info("    pipewire_serial = {}", info.pipewire_serial);
+        Logger::info("    pipewire_fd     = {}", info.pipewire_fd);
 
         return info;
     }

@@ -4,6 +4,7 @@ module;
 
 export module Environment;
 
+import Logger;
 import std;
 
 
@@ -14,6 +15,7 @@ static void setEnvIfUnset(
 {
     if (::std::getenv(name) == nullptr and not value.empty())
     {
+        Logger::info("[Environment] Setting {} to {}.", name, value.data());
         ::setenv(name, value.data(), 1);
     }
 }

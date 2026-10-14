@@ -1,7 +1,8 @@
 #include <csignal>
 
-import GstPipelineManager;
 import Environment;
+import GstPipelineManager;
+import Logger;
 import std;
 
 namespace
@@ -18,28 +19,24 @@ void requestShutdown(int) noexcept
 
 int main()
 {
-    std::println(
-        "=================================================================="
-    );
-    std::println(
-        " Wayland Native Screen-Share Engine (PipeWire + WebRTCSink)"
-    );
-    std::println(
-        "=================================================================="
-    );
+    Logger::Session logSession{};
+
+    Logger::info("==============================================================");
+    Logger::info("Wayland Native Screen-Share Engine (PipeWire + WebRTCSink)");
+    Logger::info("==============================================================");
+
+    Environment::setPaths();
+
+    std::signal(SIGINT, requestShutdown);
+    std::signal(SIGTERM, requestShutdown);
 
     try
     {
-        std::signal(SIGINT, requestShutdown);
-        std::signal(SIGTERM, requestShutdown);
-
-        Environment::setPaths();
-
         {
             GstPipelineManager pipelineManager{};
 
-            std::println("[SERVER ACTIVE] WebRTCSink is running.");
-            std::println("[SERVER ACTIVE] Press Ctrl+C to shut down.\n");
+            Logger::info("[SERVER ACTIVE] WebRTCSink is running.");
+            Logger::info("[SERVER ACTIVE] Press Ctrl+C to shut down.");
 
             while (shutdownRequested == 0)
             {
@@ -47,15 +44,15 @@ int main()
                 std::this_thread::sleep_for(100ms);
             }
 
-            std::println("\n[Shutdown] Signal received. Stopping...");
+            Logger::info("\n[Shutdown] Signal received. Stopping...");
         }
 
-        std::println("[Shutdown] GStreamer stopped safely.");
+        Logger::info("[Shutdown] GStreamer stopped safely.");
         return 0;
     }
     catch (const std::exception& e)
     {
-        std::println(std::cerr, "[FATAL ERROR] {}", e.what());
+        Logger::critical("[FATAL ERROR] {}", e.what());
         return 1;
     }
 }
