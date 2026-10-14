@@ -10,6 +10,7 @@
                 "plugins-bad",
                 "plugins-ugly",
                 "nvcodec",
+                "opus-base",
                 "webrtc"
             ]
         },

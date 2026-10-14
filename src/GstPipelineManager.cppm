@@ -49,10 +49,7 @@ private:
             return;
         }
 
-        GstRaii::GstPipelineElementPtr pipeline = buildPipeline(
-            portalSession->pipewire_fd,
-            portalSession->pipewire_node_id
-        );
+        GstRaii::GstPipelineElementPtr pipeline = buildPipeline(*portalSession);
 
         if (not pipeline)
         {
@@ -102,12 +99,24 @@ private:
     }
 
     GstRaii::GstPipelineElementPtr buildPipeline(
-        int pipewireFd,
-        unsigned int pipewireNodeId
+        const auto& portalSession
     )
     {
         const std::string pipelineDescription =
             std::format(
+                "webrtcsink name=wsink "
+                "run-signalling-server=true "
+                "signalling-server-host=0.0.0.0 "
+                "signalling-server-port=8443 "
+                "run-web-server=true "
+                "web-server-host-addr=http://0.0.0.0:8080/ "
+                "web-server-directory={} "
+                "video-caps=video/x-h264 "
+                "start-bitrate=6000000 "
+                "min-bitrate=2000000 "
+                "max-bitrate=12000000 "
+                "meta=\"meta,name=waycast\" "
+
                 "pipewiresrc fd={} path={} do-timestamp=true "
                 "! queue max-size-buffers=1 max-size-bytes=0 max-size-time=0 leaky=downstream "
                 "! videoconvert "
@@ -121,21 +130,19 @@ private:
               #endif
                 "! h264parse config-interval=-1 "
                 "! video/x-h264,profile=constrained-baseline,stream-format=avc,alignment=au "
-                "! webrtcsink "
-                "run-signalling-server=true "
-                "signalling-server-host=0.0.0.0 "
-                "signalling-server-port=8443 "
-                "run-web-server=true "
-                "web-server-host-addr=http://0.0.0.0:8080/ "
-                "web-server-directory={} "
-                "video-caps=video/x-h264 "
-                "start-bitrate=6000000 "
-                "min-bitrate=2000000 "
-                "max-bitrate=12000000 "
-                "meta=\"meta,name=waycast\"",
-                pipewireFd,
-                pipewireNodeId,
-                WAYCAST_WEB_DIR
+                "! wsink. "
+
+                "pipewiresrc path=\"@DEFAULT_AUDIO_SINK@\" "
+                "stream-properties=\"props,stream.capture.sink=true\" do-timestamp=true "
+                "! queue "
+                "! audioconvert "
+                "! audioresample "
+                "! opusenc "
+                "! audio/x-opus,rate=48000,channels=2 "
+                "! wsink.",
+                WAYCAST_WEB_DIR,
+                portalSession.pipewire_fd,
+                portalSession.pipewire_node_id
             );
 
         Logger::debug(
