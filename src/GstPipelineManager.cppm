@@ -4,6 +4,7 @@ module;
 
 export module GstPipelineManager;
 
+import GstEncoderHandler;
 import GstRaii;
 import Logger;
 import WaylandPortal;
@@ -14,9 +15,11 @@ export class GstPipelineManager
 public:
     GstPipelineManager()
     {
+        Logger::info("[GStreamer] Initializing pipeline manager.");
+
         gst_init(nullptr, nullptr);
 
-        Logger::info("[GStreamer] Initializing pipeline manager.");
+        GstEncoderHandler::checkAvailability();
 
         mediaThread = std::jthread(
             [this](std::stop_token stopToken) {
@@ -102,6 +105,13 @@ private:
         const auto& portalSession
     )
     {
+        auto encoder = GstEncoderHandler::getBestWithProperties();
+        if (not encoder)
+        {
+            Logger::error("[GStreamer] No encoder available");
+            return nullptr;
+        }
+
         const std::string pipelineDescription =
             std::format(
                 "webrtcsink name=wsink "
@@ -123,11 +133,7 @@ private:
                 "! videoscale "
                 "! video/x-raw,format=NV12 "
                 "! queue max-size-buffers=1 max-size-bytes=0 max-size-time=0 leaky=downstream "
-              #if WAYCAST_NVIDIA_OVER_VAAPI
-                "! nvh264enc rc-mode=constqp qp-const-i=23 qp-const-p=23 preset=low-latency-hq gop-size=60 "
-              #else
-                "! vah264lpenc rate-control=cqp qpi=23 qpp=23 cabac=false dct8x8=false b-frames=0 key-int-max=60 "
-              #endif
+                "! {} "
                 "! h264parse config-interval=-1 "
                 "! video/x-h264,profile=constrained-baseline,stream-format=avc,alignment=au "
                 "! wsink. "
@@ -142,7 +148,8 @@ private:
                 "! wsink.",
                 WAYCAST_WEB_DIR,
                 portalSession.pipewire_fd,
-                portalSession.pipewire_node_id
+                portalSession.pipewire_node_id,
+                *encoder
             );
 
         Logger::debug(

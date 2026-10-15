@@ -44,7 +44,11 @@ set(WAYCAST_VCPKG_PREFIX
   "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}"
 )
 
-set(WAYCAST_GSTREAMER_PLUGIN_DIR
+set(WAYCAST_GSTREAMER_PLUGIN_SCANNER
+  "${WAYCAST_VCPKG_PREFIX}/tools/gstreamer/gst-plugin-scanner"
+)
+
+set(WAYCAST_GSTREAMER_PLUGIN_PATH
   "${WAYCAST_VCPKG_PREFIX}/plugins/gstreamer"
 )
 
@@ -56,8 +60,8 @@ set(WAYCAST_LIBVA_DRIVERS_PATH
   "/usr/lib/x86_64-linux-gnu/dri"
 )
 
-set(WAYCAST_NVIDIA_OVER_VAAPI
-  1
+set(WAYCAST_ENCODER_OVERWRITE
+  ""
 )
 
 # -----------------------------------------------------------------------------
@@ -106,6 +110,7 @@ target_sources(${PROJECT_NAME}
     FILE_SET std_module TYPE CXX_MODULES BASE_DIRS "${GCC_STD_DIR}" FILES ${GCC_STD_MODULE}
     FILE_SET CXX_MODULES TYPE CXX_MODULES FILES
       src/Environment.cppm
+      src/GstEncoderHandler.cppm
       src/GstPipelineManager.cppm
       src/GstRaii.cppm
       src/Logger.cppm
@@ -130,10 +135,11 @@ target_link_libraries(${PROJECT_NAME}
 
 target_compile_definitions(${PROJECT_NAME}
   PRIVATE
-    WAYCAST_GSTREAMER_PLUGIN_DIR=\"${WAYCAST_GSTREAMER_PLUGIN_DIR}\"
+    WAYCAST_GSTREAMER_PLUGIN_SCANNER=\"${WAYCAST_GSTREAMER_PLUGIN_SCANNER}\"
+    WAYCAST_GSTREAMER_PLUGIN_PATH=\"${WAYCAST_GSTREAMER_PLUGIN_PATH}\"
     WAYCAST_WEB_DIR=\"${WAYCAST_WEB_DIR}\"
     WAYCAST_LIBVA_DRIVERS_PATH=\"${WAYCAST_LIBVA_DRIVERS_PATH}\"
-    WAYCAST_NVIDIA_OVER_VAAPI=${WAYCAST_NVIDIA_OVER_VAAPI}
+    WAYCAST_ENCODER_OVERWRITE=\"${WAYCAST_ENCODER_OVERWRITE}\"
 )
 
 # -----------------------------------------------------------------------------
@@ -149,10 +155,11 @@ message(STATUS "Compiler:            ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Compiler version:    ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "vcpkg triplet:       ${VCPKG_TARGET_TRIPLET}")
 message(STATUS "vcpkg prefix:        ${WAYCAST_VCPKG_PREFIX}")
-message(STATUS "GStreamer plugins:   ${WAYCAST_GSTREAMER_PLUGIN_DIR}")
+message(STATUS "Gst plugin scanner:  ${WAYCAST_GSTREAMER_PLUGIN_SCANNER}")
+message(STATUS "Gst plugin path:     ${WAYCAST_GSTREAMER_PLUGIN_PATH}")
 message(STATUS "WebRTC web UI:       ${WAYCAST_WEB_DIR}")
 message(STATUS "libVA drivers path:  ${WAYCAST_LIBVA_DRIVERS_PATH}")
-message(STATUS "Nvidia over VAAPI:   ${WAYCAST_NVIDIA_OVER_VAAPI}")
+message(STATUS "Encoder overwrite:   ${WAYCAST_ENCODER_OVERWRITE}")
 message(STATUS "============================================================")
 message(STATUS "")
 

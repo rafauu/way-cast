@@ -9,10 +9,7 @@
             "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
                 "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/cmake/overlays"
-            },
-            "environment": {
-                "CURL_PROTOCOLS": "http,https"
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/cmake/ports"
             }
         },
         {

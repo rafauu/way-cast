@@ -582,7 +582,6 @@
                         "plugins-base"
                     ]
                 },
-                "libva",
                 {
                     "name": "gstreamer",
                     "default-features": false,
@@ -590,7 +589,8 @@
                         "gl"
                     ],
                     "platform": "osx"
-                }
+                },
+                "libva"
             ]
         },
         "plugins-base": {

@@ -46,6 +46,8 @@ public:
                 {std::move(sink)}
             );
 
+            g_logger->set_log_level(quill::LogLevel::Debug);
+
             Logger::info("Logger initialized");
         }
 

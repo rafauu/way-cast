@@ -32,6 +32,6 @@ git clone --recurse-submodules git@github.com:rafauu/way-cast.git
 cmake --preset release
 cmake --build --preset release
 ./build/release/waycast
-   [in browser] http://localhost:8080/
-or [in browser] http://<host_ip>:8080/
+[browser] http://localhost:8080/ or http://<host_ip>:8080/
+          Remote streams -> waycast
 ```

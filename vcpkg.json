@@ -11,12 +11,18 @@
                 "plugins-ugly",
                 "nvcodec",
                 "opus-base",
-                "webrtc"
+                "webrtc",
+                "x264"
             ]
         },
-        "libnice-gst",
         "gst-plugin-webrtc",
         "pipewire",
         "quill"
+    ],
+    "description": [
+        "Custom ports:",
+        "- gstreamer - does not expose certain options as features (va)",
+        "- gst-plugin-webrtc - does not exist in vcpkg registry (rust package)",
+        "- pipewire - does not expose certain options as features (gst plugin)"
     ]
 }

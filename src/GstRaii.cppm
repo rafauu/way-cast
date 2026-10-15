@@ -41,4 +41,10 @@ export namespace GstRaii
             gst_object_unref
         >
     >;
+
+    using GstElementFactoryPtr = std::unique_ptr<GstElementFactory,
+        CascadingDeleter<
+            gst_object_unref
+        >
+    >;
 }
