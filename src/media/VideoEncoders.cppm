@@ -2,17 +2,20 @@ module;
 
 #include <gst/gst.h>
 
-export module VideoEncoders;
+export module media.VideoEncoders;
 
-import Logger;
-import MediaRaii;
 import std;
+import logger;
+import media.Raii;
 
 static bool isElementAvailable(const char* elementName)
 {
-    MediaRaii::GstElementFactoryPtr factory {gst_element_factory_find(elementName)};
+    media::Raii::GstElementFactoryPtr factory {gst_element_factory_find(elementName)};
     return factory != nullptr;
 }
+
+namespace media
+{
 
 export class VideoEncoders
 {
@@ -33,11 +36,11 @@ public:
 
     static void printAvailability()
     {
-        Logger::debug("[VideoEncoders] Available encoders:");
+        logger::debug("[VideoEncoders] Available encoders:");
 
         for (auto encoder : ENCODERS_PRIORITIES)
         {
-            Logger::debug("- {}: {}", encoder, isElementAvailable(encoder));
+            logger::debug("- {}: {}", encoder, isElementAvailable(encoder));
         }
     }
 
@@ -55,7 +58,7 @@ private:
 
         if (not overwrite.empty())
         {
-            Logger::info("[VideoEncoders] Overwritten encoder: {}", overwrite);
+            logger::info("[VideoEncoders] Overwritten encoder: {}", overwrite);
             return overwrite;
         }
 
@@ -63,11 +66,11 @@ private:
 
         if (it != ENCODERS_PRIORITIES.end())
         {
-            Logger::debug("[VideoEncoders] Chosen encoder: {}", *it);
+            logger::debug("[VideoEncoders] Chosen encoder: {}", *it);
             return *it;
         }
 
-        Logger::error("[VideoEncoders] No available encoders");
+        logger::error("[VideoEncoders] No available encoders");
         return std::nullopt;
     }
 
@@ -95,3 +98,5 @@ private:
         }
     }
 };
+
+}

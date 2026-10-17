@@ -2,9 +2,12 @@ module;
 
 #include <gst/gst.h>
 
-export module MediaRaii;
+export module media.Raii;
 
 import std;
+
+namespace media::detail
+{
 
 template <auto... Fns>
 struct CascadingDeleter
@@ -18,34 +21,35 @@ struct CascadingDeleter
     }
 };
 
-constexpr auto setPipelineNull = [] (auto* ptr) {
+auto setPipelineNull = [] (auto* ptr) {
     gst_element_set_state(ptr, GST_STATE_NULL);
 };
 
+}
 
-export namespace MediaRaii
+export namespace media::Raii
 {
     using GMainLoopPtr = std::unique_ptr<GMainLoop,
-        CascadingDeleter<
+        detail::CascadingDeleter<
             g_main_loop_unref
         >
     >;
 
     using GErrorPtr = std::unique_ptr<GError,
-        CascadingDeleter<
+        detail::CascadingDeleter<
             g_error_free
         >
     >;
 
     using GstPipelineElementPtr = std::unique_ptr<GstElement,
-        CascadingDeleter<
-            setPipelineNull,
+        detail::CascadingDeleter<
+            detail::setPipelineNull,
             gst_object_unref
         >
     >;
 
     using GstElementFactoryPtr = std::unique_ptr<GstElementFactory,
-        CascadingDeleter<
+        detail::CascadingDeleter<
             gst_object_unref
         >
     >;

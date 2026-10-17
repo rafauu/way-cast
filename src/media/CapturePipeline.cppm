@@ -2,32 +2,35 @@ module;
 
 #include <gst/gst.h>
 
-export module CapturePipeline;
+export module media.CapturePipeline;
 
-import Logger;
-import MediaRaii;
-import ScreenCapture;
-import VideoEncoders;
 import std;
+import logger;
+import media.Raii;
+import media.ScreenCapture;
+import media.VideoEncoders;
+
+namespace media
+{
 
 export class CapturePipeline
 {
 public:
     CapturePipeline()
     {
-        Logger::info("[CapturePipeline] Initializing capture pipeline.");
+        logger::info("[CapturePipeline] Initializing capture pipeline.");
 
         gst_init(nullptr, nullptr);
 
         VideoEncoders::printAvailability();
 
-        Logger::info("[CapturePipeline] Requesting screen-capture session.");
+        logger::info("[CapturePipeline] Requesting screen-capture session.");
 
         auto sessionInfo = ScreenCapture::requestSession();
 
         if (not sessionInfo)
         {
-            Logger::error(
+            logger::error(
                 "[CapturePipeline] Failed to obtain PipeWire screen-capture session."
             );
             throw std::runtime_error("Failed to obtain PipeWire screen-capture session.");
@@ -37,17 +40,17 @@ public:
 
         if (not pipeline)
         {
-            Logger::error("[CapturePipeline] Pipeline creation failed.");
+            logger::error("[CapturePipeline] Pipeline creation failed.");
             throw std::runtime_error("Pipeline creation failed.");
         }
 
-        MediaRaii::GMainLoopPtr mainLoop{
+        Raii::GMainLoopPtr mainLoop{
             g_main_loop_new(nullptr, FALSE)
         };
 
         if (not mainLoop)
         {
-            Logger::error("[CapturePipeline] Failed to create GLib main loop.");
+            logger::error("[CapturePipeline] Failed to create GLib main loop.");
             throw std::runtime_error("Failed to create GLib main loop.");
         }
 
@@ -59,27 +62,27 @@ public:
 
         if (state == GST_STATE_CHANGE_FAILURE)
         {
-            Logger::error(
+            logger::error(
                 "[CapturePipeline] Failed to set pipeline to PLAYING."
             );
             throw std::runtime_error("Failed to set pipeline to PLAYING.");
         }
 
-        Logger::info("[CapturePipeline] Screen-sharing pipeline started.");
+        logger::info("[CapturePipeline] Screen-sharing pipeline started.");
 
         mediaThread = std::jthread(
             [pipeline = std::move(pipeline), mainLoop = std::move(mainLoop)](std::stop_token stopToken) {
                 std::stop_callback stopCallback(
                     stopToken,
                     [&mainLoop] {
-                        Logger::info("[CapturePipeline] Stopping main loop in media thread.");
+                        logger::info("[CapturePipeline] Stopping main loop in media thread.");
                         g_main_loop_quit(mainLoop.get());
                     }
                 );
 
-                Logger::info("[CapturePipeline] Starting main loop in media thread.");
+                logger::info("[CapturePipeline] Starting main loop in media thread.");
                 g_main_loop_run(mainLoop.get());
-                Logger::info("[CapturePipeline] Pipeline resources released.");
+                logger::info("[CapturePipeline] Pipeline resources released.");
             }
         );
     }
@@ -94,14 +97,14 @@ public:
 private:
     std::jthread mediaThread;
 
-    MediaRaii::GstPipelineElementPtr buildPipeline(
+    Raii::GstPipelineElementPtr buildPipeline(
         const CaptureSessionInfo& sessionInfo
     )
     {
         auto videoEncoder = VideoEncoders::getBestWithProperties();
         if (not videoEncoder)
         {
-            Logger::error("[CapturePipeline] No video encoder available");
+            logger::error("[CapturePipeline] No video encoder available");
             return nullptr;
         }
 
@@ -144,14 +147,14 @@ private:
                 sessionInfo.audioSource
             );
 
-        Logger::debug(
+        logger::debug(
             "[CapturePipeline] Pipeline description:\n{}",
             pipelineDescription
         );
 
-        MediaRaii::GErrorPtr error;
+        Raii::GErrorPtr error;
 
-        MediaRaii::GstPipelineElementPtr pipeline{
+        Raii::GstPipelineElementPtr pipeline{
             gst_parse_launch(
                 pipelineDescription.c_str(),
                 std::out_ptr(error)
@@ -160,7 +163,7 @@ private:
 
         if (error)
         {
-            Logger::error(
+            logger::error(
                 "[CapturePipeline] Failed to create pipeline: {}",
                 error->message
             );
@@ -170,7 +173,7 @@ private:
 
         if (not pipeline)
         {
-            Logger::error(
+            logger::error(
                 "[CapturePipeline] gst_parse_launch returned nullptr."
             );
 
@@ -180,3 +183,5 @@ private:
         return pipeline;
     }
 };
+
+}

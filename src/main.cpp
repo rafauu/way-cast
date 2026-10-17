@@ -1,9 +1,9 @@
 #include <csignal>
 
-import CapturePipeline;
-import Environment;
-import Logger;
 import std;
+import env;
+import logger;
+import media.CapturePipeline;
 
 namespace
 {
@@ -19,13 +19,13 @@ void requestShutdown(int) noexcept
 
 int main()
 {
-    Logger::Session _{};
+    logger::Session _{};
 
-    Logger::info("======================================================");
-    Logger::info("Native Screen-Share Engine (PipeWire + WebRTCSink)");
-    Logger::info("======================================================");
+    logger::info("======================================================");
+    logger::info("Native Screen-Share Engine (PipeWire + WebRTCSink)");
+    logger::info("======================================================");
 
-    Environment::setPaths();
+    env::setPaths();
 
     std::signal(SIGINT, requestShutdown);
     std::signal(SIGTERM, requestShutdown);
@@ -33,10 +33,10 @@ int main()
     try
     {
         {
-            CapturePipeline _{};
+            media::CapturePipeline _{};
 
-            Logger::info("[SERVER ACTIVE] WebRTCSink is running.");
-            Logger::info("[SERVER ACTIVE] Press Ctrl+C to shut down.");
+            logger::info("[SERVER ACTIVE] WebRTCSink is running.");
+            logger::info("[SERVER ACTIVE] Press Ctrl+C to shut down.");
 
             while (shutdownRequested == 0)
             {
@@ -44,15 +44,15 @@ int main()
                 std::this_thread::sleep_for(250ms);
             }
 
-            Logger::info("\n[Shutdown] Signal received. Stopping...");
+            logger::info("\n[Shutdown] Signal received. Stopping...");
         }
 
-        Logger::info("[Shutdown] Capture pipeline stopped safely.");
+        logger::info("[Shutdown] Capture pipeline stopped safely.");
         return 0;
     }
     catch (const std::exception& e)
     {
-        Logger::critical("[FATAL ERROR] {}", e.what());
+        logger::critical("[FATAL ERROR] {}", e.what());
         return 1;
     }
 }

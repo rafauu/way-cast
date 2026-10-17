@@ -1,24 +1,27 @@
 module;
 
-export module ScreenCapture;
+export module media.ScreenCapture;
 
 import std;
 
 #if defined(_WIN32)
-import Wgc;
-using Backend = Wgc;
+import media.Wgc;
+using Backend = media::Wgc;
 #else
-import XdgPortal;
-using Backend = XdgPortal;
+import media.XdgPortal;
+using Backend = media::XdgPortal;
 #endif
 
-export struct CaptureSessionInfo
+export namespace media
+{
+
+struct CaptureSessionInfo
 {
     std::string videoSource;
     std::string audioSource;
 };
 
-export namespace ScreenCapture
+namespace ScreenCapture
 {
     std::optional<CaptureSessionInfo> requestSession()
     {
@@ -39,4 +42,6 @@ export namespace ScreenCapture
 #endif
         };
     }
+}
+
 }

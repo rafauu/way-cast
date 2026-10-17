@@ -3,12 +3,15 @@ module;
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 
-export module XdgPortal;
+export module media.XdgPortal;
 
-import Logger;
 import std;
+import logger;
 
-export class XdgPortal
+export namespace media
+{
+
+class XdgPortal
 {
 public:
     struct SessionInfo
@@ -83,7 +86,7 @@ private:
 
     static void fail(PortalContext* ctx, const char* reason)
     {
-        Logger::error("[XdgPortal] {}", reason);
+        logger::error("[XdgPortal] {}", reason);
         complete(ctx, SessionInfo{});
     }
 
@@ -125,7 +128,7 @@ private:
 
     static bool callSelectSources(PortalContext* ctx)
     {
-        Logger::info(
+        logger::info(
             "[XdgPortal] SelectSources: requesting monitor only...");
 
         GVariantBuilder options;
@@ -165,7 +168,7 @@ private:
 
         if (error)
         {
-            Logger::error(
+            logger::error(
                 "[XdgPortal] SelectSources failed: {}",
                 error->message);
             g_error_free(error);
@@ -177,7 +180,7 @@ private:
 
     static bool callStart(PortalContext* ctx)
     {
-        Logger::info(
+        logger::info(
             "[XdgPortal] Start: opening source-selection dialog...");
 
         GVariantBuilder options;
@@ -210,7 +213,7 @@ private:
 
         if (error)
         {
-            Logger::error(
+            logger::error(
                 "[XdgPortal] Start failed: {}",
                 error->message);
             g_error_free(error);
@@ -222,7 +225,7 @@ private:
 
     static bool openPipeWireRemote(PortalContext* ctx)
     {
-        Logger::info("[XdgPortal] Opening PipeWire remote...");
+        logger::info("[XdgPortal] Opening PipeWire remote...");
 
         GError* error = nullptr;
         GUnixFDList* fd_list = nullptr;
@@ -246,7 +249,7 @@ private:
 
         if (error)
         {
-            Logger::error(
+            logger::error(
                 "[XdgPortal] OpenPipeWireRemote failed: {}",
                 error->message);
             g_error_free(error);
@@ -261,7 +264,7 @@ private:
 
         if (!result || !fd_list)
         {
-            Logger::error(
+            logger::error(
                 "[XdgPortal] OpenPipeWireRemote returned no FD.");
 
             if (result)
@@ -282,7 +285,7 @@ private:
 
         if (handle < 0)
         {
-            Logger::error("[XdgPortal] Invalid PipeWire FD handle.");
+            logger::error("[XdgPortal] Invalid PipeWire FD handle.");
             g_variant_unref(result);
             g_object_unref(fd_list);
             return false;
@@ -295,7 +298,7 @@ private:
 
         if (fd_error)
         {
-            Logger::error(
+            logger::error(
                 "[XdgPortal] Failed to extract PipeWire FD: {}",
                 fd_error->message);
             g_error_free(fd_error);
@@ -306,7 +309,7 @@ private:
 
         ctx->pipewire_fd = fd;
 
-        Logger::info(
+        logger::info(
             "[XdgPortal] PipeWire FD = {}", ctx->pipewire_fd);
 
         g_variant_unref(result);
@@ -337,7 +340,7 @@ private:
 
         if (response_code != 0)
         {
-            Logger::error(
+            logger::error(
                 "[XdgPortal] Portal request cancelled/failed. "
                 "Response code = {}",
                 response_code);
@@ -382,8 +385,8 @@ private:
 
             ctx->create_session_done = true;
 
-            Logger::info("[XdgPortal] CreateSession succeeded.");
-            Logger::debug(
+            logger::info("[XdgPortal] CreateSession succeeded.");
+            logger::debug(
                 "[XdgPortal] Session handle: {}",
                 ctx->session_handle);
 
@@ -402,7 +405,7 @@ private:
         {
             ctx->select_sources_done = true;
 
-            Logger::info("[XdgPortal] SelectSources succeeded.");
+            logger::info("[XdgPortal] SelectSources succeeded.");
 
             g_variant_unref(results);
 
@@ -451,7 +454,7 @@ private:
                 const bool has_serial = getUint64Property(
                     properties, "pipewire-serial", pipewire_serial);
 
-                Logger::info(
+                logger::info(
                     "[XdgPortal] Selected stream: node_id={}",
                     node_id);
 
@@ -463,25 +466,25 @@ private:
                         source_type == 4 ? "VIRTUAL" :
                                            "UNKNOWN";
 
-                    Logger::info(
+                    logger::info(
                         "[XdgPortal] source_type={} ({})",
                         source_type, source_name);
                 }
                 else
                 {
-                    Logger::warning(
+                    logger::warning(
                         "[XdgPortal] source_type=<missing>");
                 }
 
                 if (has_serial)
                 {
-                    Logger::info(
+                    logger::info(
                         "[XdgPortal] pipewire-serial={}",
                         pipewire_serial);
                 }
                 else
                 {
-                    Logger::warning(
+                    logger::warning(
                         "[XdgPortal] pipewire-serial=<missing>");
                 }
 
@@ -512,10 +515,10 @@ private:
 
             if (ctx->pipewire_serial == 0)
             {
-                Logger::warning(
+                logger::warning(
                     "[XdgPortal] pipewire-serial was not provided "
                     "by this portal.");
-                Logger::warning(
+                logger::warning(
                     "[XdgPortal] Falling back to node_id.");
             }
 
@@ -552,7 +555,7 @@ public:
 
         if (!loop)
         {
-            Logger::error(
+            logger::error(
                 "[XdgPortal] Failed to create GLib main loop.");
             return std::nullopt;
         }
@@ -569,14 +572,14 @@ public:
         {
             if (connection_error)
             {
-                Logger::error(
+                logger::error(
                     "[XdgPortal] Failed to connect to session D-Bus: {}",
                     connection_error->message);
                 g_error_free(connection_error);
             }
             else
             {
-                Logger::error(
+                logger::error(
                     "[XdgPortal] Failed to connect to session D-Bus.");
             }
 
@@ -604,7 +607,7 @@ public:
                 nullptr);
 
         // CREATE SESSION
-        Logger::info(
+        logger::info(
             "[XdgPortal] Creating ScreenCast session...");
 
         GVariantBuilder options;
@@ -640,7 +643,7 @@ public:
 
         if (create_error)
         {
-            Logger::error(
+            logger::error(
                 "[XdgPortal] CreateSession failed: {}",
                 create_error->message);
 
@@ -654,7 +657,7 @@ public:
             return std::nullopt;
         }
 
-        Logger::info(
+        logger::info(
             "[XdgPortal] Waiting for monitor selection...");
 
         std::jthread glib_thread([loop]
@@ -667,7 +670,7 @@ public:
 
         if (status == std::future_status::timeout)
         {
-            Logger::error(
+            logger::error(
                 "[XdgPortal] Timed out waiting for portal.");
 
             g_main_loop_quit(loop);
@@ -703,23 +706,25 @@ public:
 
         if (info.pipewire_fd < 0)
         {
-            Logger::error("[XdgPortal] Invalid PipeWire FD.");
+            logger::error("[XdgPortal] Invalid PipeWire FD.");
             g_object_unref(conn);
             return std::nullopt;
         }
 
         if (info.pipewire_node_id == 0)
         {
-            Logger::error("[XdgPortal] Invalid PipeWire node ID.");
+            logger::error("[XdgPortal] Invalid PipeWire node ID.");
             g_object_unref(conn);
             return std::nullopt;
         }
 
-        Logger::info("[XdgPortal] ScreenCast session ready.");
-        Logger::info("    node_id         = {}", info.pipewire_node_id);
-        Logger::info("    pipewire_serial = {}", info.pipewire_serial);
-        Logger::info("    pipewire_fd     = {}", info.pipewire_fd);
+        logger::info("[XdgPortal] ScreenCast session ready.");
+        logger::info("    node_id         = {}", info.pipewire_node_id);
+        logger::info("    pipewire_serial = {}", info.pipewire_serial);
+        logger::info("    pipewire_fd     = {}", info.pipewire_fd);
 
         return info;
     }
 };
+
+}
