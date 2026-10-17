@@ -7,7 +7,7 @@ project(waycast LANGUAGES CXX)
 # -----------------------------------------------------------------------------
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
 set(CMAKE_CXX_STANDARD 26)
@@ -56,9 +56,11 @@ set(WAYCAST_WEB_DIR
   "${WAYCAST_VCPKG_PREFIX}/share/gstwebrtc-api/dist"
 )
 
-set(WAYCAST_LIBVA_DRIVERS_PATH
-  "/usr/lib/x86_64-linux-gnu/dri"
-)
+if(UNIX)
+  set(WAYCAST_LIBVA_DRIVERS_PATH
+    "/usr/lib/x86_64-linux-gnu/dri"
+  )
+endif()
 
 set(WAYCAST_ENCODER_OVERWRITE
   ""
@@ -105,16 +107,25 @@ target_compile_options(${PROJECT_NAME}
     $<$<CONFIG:Release>:-march=native>
 )
 
+set(WAYCAST_SOURCES
+    src/CapturePipeline.cppm
+    src/Environment.cppm
+    src/Logger.cppm
+    src/MediaRaii.cppm
+    src/ScreenCapture.cppm
+    src/VideoEncoders.cppm
+)
+
+if(WIN32)
+  list(APPEND WAYCAST_SOURCES src/windows/Wgc.cppm)
+elseif(UNIX)
+  list(APPEND WAYCAST_SOURCES src/linux/XdgPortal.cppm)
+endif()
+
 target_sources(${PROJECT_NAME}
   PRIVATE
     FILE_SET std_module TYPE CXX_MODULES BASE_DIRS "${GCC_STD_DIR}" FILES ${GCC_STD_MODULE}
-    FILE_SET CXX_MODULES TYPE CXX_MODULES FILES
-      src/CapturePipeline.cppm
-      src/Environment.cppm
-      src/Logger.cppm
-      src/MediaRaii.cppm
-      src/VideoEncoders.cppm
-      src/XdgPortal.cppm
+    FILE_SET CXX_MODULES TYPE CXX_MODULES FILES ${WAYCAST_SOURCES}
 )
 
 target_link_libraries(${PROJECT_NAME}

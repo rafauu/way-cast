@@ -19,8 +19,12 @@ export class VideoEncoders
 private:
     static constexpr std::array ENCODERS_PRIORITIES{
         "nvh264enc",
+#if defined(_WIN32)
+        "mfh264enc",
+#else
         "vah264enc",
         "vah264lpenc",
+#endif
         "x264enc"
     };
 
@@ -72,6 +76,10 @@ private:
         if (encoder == "nvh264enc")
         {
             return "rc-mode=constqp qp-const-i=23 qp-const-p=23 preset=low-latency-hq gop-size=60";
+        }
+        else if (encoder == "mfh264enc")
+        {
+            return "rate-control=pcbr bitrate=4000000"; // tbd: adjust
         }
         else if (encoder == "vah264enc" or encoder == "vah264lpenc")
         {
