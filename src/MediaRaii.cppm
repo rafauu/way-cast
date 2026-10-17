@@ -2,7 +2,7 @@ module;
 
 #include <gst/gst.h>
 
-export module GstRaii;
+export module MediaRaii;
 
 import std;
 
@@ -18,10 +18,12 @@ struct CascadingDeleter
     }
 };
 
-auto setPipelineNull = [](auto* ptr) { gst_element_set_state(ptr, GST_STATE_NULL); };
+constexpr auto setPipelineNull = [] (auto* ptr) {
+    gst_element_set_state(ptr, GST_STATE_NULL);
+};
 
 
-export namespace GstRaii
+export namespace MediaRaii
 {
     using GMainLoopPtr = std::unique_ptr<GMainLoop,
         CascadingDeleter<

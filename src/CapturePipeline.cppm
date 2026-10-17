@@ -2,72 +2,53 @@ module;
 
 #include <gst/gst.h>
 
-export module GstPipelineManager;
+export module CapturePipeline;
 
-import GstEncoderHandler;
-import GstRaii;
 import Logger;
-import WaylandPortal;
+import MediaRaii;
+import VideoEncoders;
+import XdgPortal;
 import std;
 
-export class GstPipelineManager
+export class CapturePipeline
 {
 public:
-    GstPipelineManager()
+    CapturePipeline()
     {
-        Logger::info("[GStreamer] Initializing pipeline manager.");
+        Logger::info("[CapturePipeline] Initializing capture pipeline.");
 
         gst_init(nullptr, nullptr);
 
-        GstEncoderHandler::checkAvailability();
+        VideoEncoders::printAvailability();
 
-        mediaThread = std::jthread(
-            [this](std::stop_token stopToken) {
-                mediaLoop(stopToken);
-            }
-        );
-    }
+        Logger::info("[CapturePipeline] Requesting screen-capture session.");
 
-    ~GstPipelineManager() = default;
-
-    GstPipelineManager(const GstPipelineManager&) = delete;
-    GstPipelineManager& operator=(const GstPipelineManager&) = delete;
-    GstPipelineManager(GstPipelineManager&&) = delete;
-    GstPipelineManager& operator=(GstPipelineManager&&) = delete;
-
-private:
-    std::jthread mediaThread;
-
-    void mediaLoop(std::stop_token stopToken)
-    {
-        Logger::info("[GStreamer] Requesting Wayland screen-capture session.");
-
-        auto portalSession = WaylandPortal::requestScreenCapture();
+        auto portalSession = XdgPortal::requestScreenCapture();
 
         if (not portalSession)
         {
             Logger::error(
-                "[GStreamer] Failed to obtain PipeWire screen-capture session."
+                "[CapturePipeline] Failed to obtain PipeWire screen-capture session."
             );
-            return;
+            throw std::runtime_error("Failed to obtain PipeWire screen-capture session.");
         }
 
-        GstRaii::GstPipelineElementPtr pipeline = buildPipeline(*portalSession);
+        auto pipeline = buildPipeline(*portalSession);
 
         if (not pipeline)
         {
-            Logger::error("[GStreamer] Pipeline creation failed.");
-            return;
+            Logger::error("[CapturePipeline] Pipeline creation failed.");
+            throw std::runtime_error("Pipeline creation failed.");
         }
 
-        GstRaii::GMainLoopPtr mainLoop{
+        MediaRaii::GMainLoopPtr mainLoop{
             g_main_loop_new(nullptr, FALSE)
         };
 
         if (not mainLoop)
         {
-            Logger::error("[GStreamer] Failed to create GLib main loop.");
-            return;
+            Logger::error("[CapturePipeline] Failed to create GLib main loop.");
+            throw std::runtime_error("Failed to create GLib main loop.");
         }
 
         const GstStateChangeReturn state =
@@ -79,36 +60,48 @@ private:
         if (state == GST_STATE_CHANGE_FAILURE)
         {
             Logger::error(
-                "[GStreamer] Failed to set pipeline to PLAYING."
+                "[CapturePipeline] Failed to set pipeline to PLAYING."
             );
-            return;
+            throw std::runtime_error("Failed to set pipeline to PLAYING.");
         }
 
-        Logger::info("[GStreamer] Screen-sharing pipeline started.");
+        Logger::info("[CapturePipeline] Screen-sharing pipeline started.");
 
-        std::stop_callback stopCallback(
-            stopToken,
-            [loop = mainLoop.get()] {
-                g_main_loop_quit(loop);
+        mediaThread = std::jthread(
+            [pipeline = std::move(pipeline), mainLoop = std::move(mainLoop)](std::stop_token stopToken) {
+                std::stop_callback stopCallback(
+                    stopToken,
+                    [&mainLoop] {
+                        Logger::info("[CapturePipeline] Stopping main loop in media thread.");
+                        g_main_loop_quit(mainLoop.get());
+                    }
+                );
+
+                Logger::info("[CapturePipeline] Starting main loop in media thread.");
+                g_main_loop_run(mainLoop.get());
+                Logger::info("[CapturePipeline] Pipeline resources released.");
             }
         );
-
-        if (not stopToken.stop_requested())
-        {
-            g_main_loop_run(mainLoop.get());
-        }
-
-        Logger::info("[GStreamer] Pipeline resources released.");
     }
 
-    GstRaii::GstPipelineElementPtr buildPipeline(
+    ~CapturePipeline() = default;
+
+    CapturePipeline(const CapturePipeline&) = delete;
+    CapturePipeline& operator=(const CapturePipeline&) = delete;
+    CapturePipeline(CapturePipeline&&) = delete;
+    CapturePipeline& operator=(CapturePipeline&&) = delete;
+
+private:
+    std::jthread mediaThread;
+
+    MediaRaii::GstPipelineElementPtr buildPipeline(
         const auto& portalSession
     )
     {
-        auto encoder = GstEncoderHandler::getBestWithProperties();
+        auto encoder = VideoEncoders::getBestWithProperties();
         if (not encoder)
         {
-            Logger::error("[GStreamer] No encoder available");
+            Logger::error("[CapturePipeline] No encoder available");
             return nullptr;
         }
 
@@ -153,13 +146,13 @@ private:
             );
 
         Logger::debug(
-            "[GStreamer] Pipeline description:\n{}",
+            "[CapturePipeline] Pipeline description:\n{}",
             pipelineDescription
         );
 
-        GstRaii::GErrorPtr error;
+        MediaRaii::GErrorPtr error;
 
-        GstRaii::GstPipelineElementPtr pipeline{
+        MediaRaii::GstPipelineElementPtr pipeline{
             gst_parse_launch(
                 pipelineDescription.c_str(),
                 std::out_ptr(error)
@@ -169,7 +162,7 @@ private:
         if (error)
         {
             Logger::error(
-                "[GStreamer] Failed to create pipeline: {}",
+                "[CapturePipeline] Failed to create pipeline: {}",
                 error->message
             );
 
@@ -179,7 +172,7 @@ private:
         if (not pipeline)
         {
             Logger::error(
-                "[GStreamer] gst_parse_launch returned nullptr."
+                "[CapturePipeline] gst_parse_launch returned nullptr."
             );
 
             return nullptr;

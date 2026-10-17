@@ -2,7 +2,7 @@ module;
 
 #include "quill/Backend.h"
 #include "quill/Frontend.h"
-#include "quill/LogMacros.h"
+#include "quill/LogFunctions.h"
 #include "quill/Logger.h"
 #include "quill/sinks/ConsoleSink.h"
 
@@ -37,13 +37,14 @@ public:
         {
             quill::Backend::start();
 
-            auto sink = quill::Frontend::create_or_get_sink<quill::ConsoleSink>(
-                "waycast_console"
-            );
-
             g_logger = quill::Frontend::create_or_get_logger(
                 "waycast",
-                {std::move(sink)}
+                quill::Frontend::create_or_get_sink<quill::ConsoleSink>(
+                    "waycast_console"
+                ),
+                quill::PatternFormatterOptions{
+                    "%(time) [%(thread_id)] LOG_%(log_level:<9) %(message)"
+                }
             );
 
             g_logger->set_log_level(quill::LogLevel::Debug);
@@ -105,32 +106,32 @@ public:
     }
 
 private:
-    static void log(Level Level, std::string message)
+    static void log(Level level, std::string message)
     {
         if (not g_logger)
         {
             return;
         }
 
-        switch (Level)
+        switch (level)
         {
             case Level::Trace:
-                LOG_TRACE_L3(g_logger, "{}", message);
+                quill::tracel3(g_logger, "{}", message);
                 break;
             case Level::Debug:
-                LOG_DEBUG(g_logger, "{}", message);
+                quill::debug(g_logger, "{}", message);
                 break;
             case Level::Info:
-                LOG_INFO(g_logger, "{}", message);
+                quill::info(g_logger, "{}", message);
                 break;
             case Level::Warning:
-                LOG_WARNING(g_logger, "{}", message);
+                quill::warning(g_logger, "{}", message);
                 break;
             case Level::Error:
-                LOG_ERROR(g_logger, "{}", message);
+                quill::error(g_logger, "{}", message);
                 break;
             case Level::Critical:
-                LOG_CRITICAL(g_logger, "{}", message);
+                quill::critical(g_logger, "{}", message);
                 break;
         }
     }

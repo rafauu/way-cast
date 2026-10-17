@@ -109,12 +109,12 @@ target_sources(${PROJECT_NAME}
   PRIVATE
     FILE_SET std_module TYPE CXX_MODULES BASE_DIRS "${GCC_STD_DIR}" FILES ${GCC_STD_MODULE}
     FILE_SET CXX_MODULES TYPE CXX_MODULES FILES
+      src/CapturePipeline.cppm
       src/Environment.cppm
-      src/GstEncoderHandler.cppm
-      src/GstPipelineManager.cppm
-      src/GstRaii.cppm
       src/Logger.cppm
-      src/WaylandPortal.cppm
+      src/MediaRaii.cppm
+      src/VideoEncoders.cppm
+      src/XdgPortal.cppm
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -1,7 +1,7 @@
 #include <csignal>
 
+import CapturePipeline;
 import Environment;
-import GstPipelineManager;
 import Logger;
 import std;
 
@@ -19,11 +19,11 @@ void requestShutdown(int) noexcept
 
 int main()
 {
-    Logger::Session logSession{};
+    Logger::Session _{};
 
-    Logger::info("==============================================================");
-    Logger::info("Wayland Native Screen-Share Engine (PipeWire + WebRTCSink)");
-    Logger::info("==============================================================");
+    Logger::info("======================================================");
+    Logger::info("Native Screen-Share Engine (PipeWire + WebRTCSink)");
+    Logger::info("======================================================");
 
     Environment::setPaths();
 
@@ -33,7 +33,7 @@ int main()
     try
     {
         {
-            GstPipelineManager pipelineManager{};
+            CapturePipeline _{};
 
             Logger::info("[SERVER ACTIVE] WebRTCSink is running.");
             Logger::info("[SERVER ACTIVE] Press Ctrl+C to shut down.");
@@ -41,13 +41,13 @@ int main()
             while (shutdownRequested == 0)
             {
                 using namespace std::chrono_literals;
-                std::this_thread::sleep_for(100ms);
+                std::this_thread::sleep_for(250ms);
             }
 
             Logger::info("\n[Shutdown] Signal received. Stopping...");
         }
 
-        Logger::info("[Shutdown] GStreamer stopped safely.");
+        Logger::info("[Shutdown] Capture pipeline stopped safely.");
         return 0;
     }
     catch (const std::exception& e)

@@ -3,12 +3,12 @@ module;
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 
-export module WaylandPortal;
+export module XdgPortal;
 
 import Logger;
 import std;
 
-export class WaylandPortal
+export class XdgPortal
 {
 public:
     struct SessionInfo
@@ -83,7 +83,7 @@ private:
 
     static void fail(PortalContext* ctx, const char* reason)
     {
-        Logger::error("[WaylandPortal] {}", reason);
+        Logger::error("[XdgPortal] {}", reason);
         complete(ctx, SessionInfo{});
     }
 
@@ -126,7 +126,7 @@ private:
     static bool callSelectSources(PortalContext* ctx)
     {
         Logger::info(
-            "[WaylandPortal] SelectSources: requesting monitor only...");
+            "[XdgPortal] SelectSources: requesting monitor only...");
 
         GVariantBuilder options;
         g_variant_builder_init(&options, G_VARIANT_TYPE_VARDICT);
@@ -166,7 +166,7 @@ private:
         if (error)
         {
             Logger::error(
-                "[WaylandPortal] SelectSources failed: {}",
+                "[XdgPortal] SelectSources failed: {}",
                 error->message);
             g_error_free(error);
             return false;
@@ -178,7 +178,7 @@ private:
     static bool callStart(PortalContext* ctx)
     {
         Logger::info(
-            "[WaylandPortal] Start: opening source-selection dialog...");
+            "[XdgPortal] Start: opening source-selection dialog...");
 
         GVariantBuilder options;
         g_variant_builder_init(&options, G_VARIANT_TYPE_VARDICT);
@@ -211,7 +211,7 @@ private:
         if (error)
         {
             Logger::error(
-                "[WaylandPortal] Start failed: {}",
+                "[XdgPortal] Start failed: {}",
                 error->message);
             g_error_free(error);
             return false;
@@ -222,7 +222,7 @@ private:
 
     static bool openPipeWireRemote(PortalContext* ctx)
     {
-        Logger::info("[WaylandPortal] Opening PipeWire remote...");
+        Logger::info("[XdgPortal] Opening PipeWire remote...");
 
         GError* error = nullptr;
         GUnixFDList* fd_list = nullptr;
@@ -247,7 +247,7 @@ private:
         if (error)
         {
             Logger::error(
-                "[WaylandPortal] OpenPipeWireRemote failed: {}",
+                "[XdgPortal] OpenPipeWireRemote failed: {}",
                 error->message);
             g_error_free(error);
 
@@ -262,7 +262,7 @@ private:
         if (!result || !fd_list)
         {
             Logger::error(
-                "[WaylandPortal] OpenPipeWireRemote returned no FD.");
+                "[XdgPortal] OpenPipeWireRemote returned no FD.");
 
             if (result)
             {
@@ -282,7 +282,7 @@ private:
 
         if (handle < 0)
         {
-            Logger::error("[WaylandPortal] Invalid PipeWire FD handle.");
+            Logger::error("[XdgPortal] Invalid PipeWire FD handle.");
             g_variant_unref(result);
             g_object_unref(fd_list);
             return false;
@@ -296,7 +296,7 @@ private:
         if (fd_error)
         {
             Logger::error(
-                "[WaylandPortal] Failed to extract PipeWire FD: {}",
+                "[XdgPortal] Failed to extract PipeWire FD: {}",
                 fd_error->message);
             g_error_free(fd_error);
             g_variant_unref(result);
@@ -307,7 +307,7 @@ private:
         ctx->pipewire_fd = fd;
 
         Logger::info(
-            "[WaylandPortal] PipeWire FD = {}", ctx->pipewire_fd);
+            "[XdgPortal] PipeWire FD = {}", ctx->pipewire_fd);
 
         g_variant_unref(result);
         g_object_unref(fd_list);
@@ -338,7 +338,7 @@ private:
         if (response_code != 0)
         {
             Logger::error(
-                "[WaylandPortal] Portal request cancelled/failed. "
+                "[XdgPortal] Portal request cancelled/failed. "
                 "Response code = {}",
                 response_code);
 
@@ -382,9 +382,9 @@ private:
 
             ctx->create_session_done = true;
 
-            Logger::info("[WaylandPortal] CreateSession succeeded.");
+            Logger::info("[XdgPortal] CreateSession succeeded.");
             Logger::debug(
-                "[WaylandPortal] Session handle: {}",
+                "[XdgPortal] Session handle: {}",
                 ctx->session_handle);
 
             g_variant_unref(results);
@@ -402,7 +402,7 @@ private:
         {
             ctx->select_sources_done = true;
 
-            Logger::info("[WaylandPortal] SelectSources succeeded.");
+            Logger::info("[XdgPortal] SelectSources succeeded.");
 
             g_variant_unref(results);
 
@@ -452,7 +452,7 @@ private:
                     properties, "pipewire-serial", pipewire_serial);
 
                 Logger::info(
-                    "[WaylandPortal] Selected stream: node_id={}",
+                    "[XdgPortal] Selected stream: node_id={}",
                     node_id);
 
                 if (has_source_type)
@@ -464,25 +464,25 @@ private:
                                            "UNKNOWN";
 
                     Logger::info(
-                        "[WaylandPortal] source_type={} ({})",
+                        "[XdgPortal] source_type={} ({})",
                         source_type, source_name);
                 }
                 else
                 {
                     Logger::warning(
-                        "[WaylandPortal] source_type=<missing>");
+                        "[XdgPortal] source_type=<missing>");
                 }
 
                 if (has_serial)
                 {
                     Logger::info(
-                        "[WaylandPortal] pipewire-serial={}",
+                        "[XdgPortal] pipewire-serial={}",
                         pipewire_serial);
                 }
                 else
                 {
                     Logger::warning(
-                        "[WaylandPortal] pipewire-serial=<missing>");
+                        "[XdgPortal] pipewire-serial=<missing>");
                 }
 
                 if (!found_stream)
@@ -513,10 +513,10 @@ private:
             if (ctx->pipewire_serial == 0)
             {
                 Logger::warning(
-                    "[WaylandPortal] pipewire-serial was not provided "
+                    "[XdgPortal] pipewire-serial was not provided "
                     "by this portal.");
                 Logger::warning(
-                    "[WaylandPortal] Falling back to node_id.");
+                    "[XdgPortal] Falling back to node_id.");
             }
 
             ctx->start_done = true;
@@ -553,7 +553,7 @@ public:
         if (!loop)
         {
             Logger::error(
-                "[WaylandPortal] Failed to create GLib main loop.");
+                "[XdgPortal] Failed to create GLib main loop.");
             return std::nullopt;
         }
 
@@ -570,14 +570,14 @@ public:
             if (connection_error)
             {
                 Logger::error(
-                    "[WaylandPortal] Failed to connect to session D-Bus: {}",
+                    "[XdgPortal] Failed to connect to session D-Bus: {}",
                     connection_error->message);
                 g_error_free(connection_error);
             }
             else
             {
                 Logger::error(
-                    "[WaylandPortal] Failed to connect to session D-Bus.");
+                    "[XdgPortal] Failed to connect to session D-Bus.");
             }
 
             g_main_loop_unref(loop);
@@ -599,13 +599,13 @@ public:
                 nullptr,
                 nullptr,
                 G_DBUS_SIGNAL_FLAGS_NONE,
-                &WaylandPortal::onPortalResponse,
+                &XdgPortal::onPortalResponse,
                 &ctx,
                 nullptr);
 
         // CREATE SESSION
         Logger::info(
-            "[WaylandPortal] Creating ScreenCast session...");
+            "[XdgPortal] Creating ScreenCast session...");
 
         GVariantBuilder options;
         g_variant_builder_init(&options, G_VARIANT_TYPE_VARDICT);
@@ -641,7 +641,7 @@ public:
         if (create_error)
         {
             Logger::error(
-                "[WaylandPortal] CreateSession failed: {}",
+                "[XdgPortal] CreateSession failed: {}",
                 create_error->message);
 
             g_error_free(create_error);
@@ -655,7 +655,7 @@ public:
         }
 
         Logger::info(
-            "[WaylandPortal] Waiting for monitor selection...");
+            "[XdgPortal] Waiting for monitor selection...");
 
         std::jthread glib_thread([loop]
         {
@@ -668,7 +668,7 @@ public:
         if (status == std::future_status::timeout)
         {
             Logger::error(
-                "[WaylandPortal] Timed out waiting for portal.");
+                "[XdgPortal] Timed out waiting for portal.");
 
             g_main_loop_quit(loop);
 
@@ -703,19 +703,19 @@ public:
 
         if (info.pipewire_fd < 0)
         {
-            Logger::error("[WaylandPortal] Invalid PipeWire FD.");
+            Logger::error("[XdgPortal] Invalid PipeWire FD.");
             g_object_unref(conn);
             return std::nullopt;
         }
 
         if (info.pipewire_node_id == 0)
         {
-            Logger::error("[WaylandPortal] Invalid PipeWire node ID.");
+            Logger::error("[XdgPortal] Invalid PipeWire node ID.");
             g_object_unref(conn);
             return std::nullopt;
         }
 
-        Logger::info("[WaylandPortal] ScreenCast session ready.");
+        Logger::info("[XdgPortal] ScreenCast session ready.");
         Logger::info("    node_id         = {}", info.pipewire_node_id);
         Logger::info("    pipewire_serial = {}", info.pipewire_serial);
         Logger::info("    pipewire_fd     = {}", info.pipewire_fd);

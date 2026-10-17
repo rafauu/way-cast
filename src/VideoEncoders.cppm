@@ -2,19 +2,19 @@ module;
 
 #include <gst/gst.h>
 
-export module GstEncoderHandler;
+export module VideoEncoders;
 
-import GstRaii;
 import Logger;
+import MediaRaii;
 import std;
 
 static bool isElementAvailable(const char* elementName)
 {
-    GstRaii::GstElementFactoryPtr factory {gst_element_factory_find(elementName)};
+    MediaRaii::GstElementFactoryPtr factory {gst_element_factory_find(elementName)};
     return factory != nullptr;
 }
 
-export class GstEncoderHandler
+export class VideoEncoders
 {
 private:
     static constexpr std::array ENCODERS_PRIORITIES{
@@ -25,11 +25,11 @@ private:
     };
 
 public:
-    GstEncoderHandler() = delete;
+    VideoEncoders() = delete;
 
-    static void checkAvailability()
+    static void printAvailability()
     {
-        Logger::debug("Available encoders:");
+        Logger::debug("[VideoEncoders] Available encoders:");
 
         for (auto encoder : ENCODERS_PRIORITIES)
         {
@@ -51,7 +51,7 @@ private:
 
         if (not overwrite.empty())
         {
-            Logger::info("Overwritten encoder: {}", overwrite);
+            Logger::info("[VideoEncoders] Overwritten encoder: {}", overwrite);
             return overwrite;
         }
 
@@ -59,11 +59,11 @@ private:
 
         if (it != ENCODERS_PRIORITIES.end())
         {
-            Logger::debug("Chosen encoder: {}", *it);
+            Logger::debug("[VideoEncoders] Chosen encoder: {}", *it);
             return *it;
         }
 
-        Logger::error("No available encoders");
+        Logger::error("[VideoEncoders] No available encoders");
         return std::nullopt;
     }
 
