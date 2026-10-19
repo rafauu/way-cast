@@ -22,27 +22,17 @@ export class VideoEncoders
 private:
     static constexpr std::array ENCODERS_PRIORITIES{
         "nvh264enc",
-#if defined(_WIN32)
-        "mfh264enc",
-#else
+#ifdef __linux__
         "vah264enc",
         "vah264lpenc",
+#else
+        "mfh264enc",
 #endif
         "x264enc"
     };
 
 public:
     VideoEncoders() = delete;
-
-    static void printAvailability()
-    {
-        logger::debug("[VideoEncoders] Available encoders:");
-
-        for (auto encoder : ENCODERS_PRIORITIES)
-        {
-            logger::debug("- {}: {}", encoder, isElementAvailable(encoder));
-        }
-    }
 
     static std::optional<std::string> getBestWithProperties()
     {
@@ -54,6 +44,22 @@ public:
 private:
     static std::optional<std::string_view> getBestEncoder()
     {
+        static auto availabilityList = [] {
+            std::vector<std::string_view> available;
+            logger::debug("[VideoEncoders] Availability:");
+
+            for (auto encoder : ENCODERS_PRIORITIES)
+            {
+                const bool isAvailable = isElementAvailable(encoder);
+                logger::debug("- {}: {}", encoder, isAvailable);
+                if (isAvailable)
+                {
+                    available.emplace_back(encoder);
+                }
+            }
+            return available;
+        } ();
+
         static constexpr std::string_view overwrite = WAYCAST_ENCODER_OVERWRITE;
 
         if (not overwrite.empty())
@@ -62,12 +68,11 @@ private:
             return overwrite;
         }
 
-        auto it = std::ranges::find_if(ENCODERS_PRIORITIES, isElementAvailable);
-
-        if (it != ENCODERS_PRIORITIES.end())
+        if (not availabilityList.empty())
         {
-            logger::debug("[VideoEncoders] Chosen encoder: {}", *it);
-            return *it;
+            const auto bestEncoder = availabilityList.front();
+            logger::debug("[VideoEncoders] Chosen encoder: {}", bestEncoder);
+            return bestEncoder;
         }
 
         logger::error("[VideoEncoders] No available encoders");

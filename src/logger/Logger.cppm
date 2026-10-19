@@ -10,13 +10,8 @@ export module logger;
 
 import std;
 
-namespace
-{
 
-inline quill::Logger* g_logger = nullptr;
-
-}
-
+static quill::Logger* loggerInstance = nullptr;
 
 export namespace logger
 {
@@ -33,7 +28,7 @@ enum class Level
 
 void logImpl(Level level, std::string message)
 {
-    if (not g_logger)
+    if (not loggerInstance)
     {
         return;
     }
@@ -41,22 +36,22 @@ void logImpl(Level level, std::string message)
     switch (level)
     {
         case Level::Trace:
-            quill::tracel3(g_logger, "{}", message);
+            quill::tracel3(loggerInstance, "{}", message);
             break;
         case Level::Debug:
-            quill::debug(g_logger, "{}", message);
+            quill::debug(loggerInstance, "{}", message);
             break;
         case Level::Info:
-            quill::info(g_logger, "{}", message);
+            quill::info(loggerInstance, "{}", message);
             break;
         case Level::Warning:
-            quill::warning(g_logger, "{}", message);
+            quill::warning(loggerInstance, "{}", message);
             break;
         case Level::Error:
-            quill::error(g_logger, "{}", message);
+            quill::error(loggerInstance, "{}", message);
             break;
         case Level::Critical:
-            quill::critical(g_logger, "{}", message);
+            quill::critical(loggerInstance, "{}", message);
             break;
     }
 }
@@ -104,7 +99,7 @@ public:
     {
         quill::Backend::start();
 
-        g_logger = quill::Frontend::create_or_get_logger(
+        loggerInstance = quill::Frontend::create_or_get_logger(
             "waycast",
             quill::Frontend::create_or_get_sink<quill::ConsoleSink>(
                 "waycast_console"
@@ -114,20 +109,20 @@ public:
             }
         );
 
-        g_logger->set_log_level(quill::LogLevel::Debug);
+        loggerInstance->set_log_level(quill::LogLevel::Debug);
 
         logger::info("Logger initialized");
     }
 
     ~Session()
     {
-        if (g_logger)
+        if (loggerInstance)
         {
             logger::info("Logger shutting down");
         }
 
         quill::Backend::stop();
-        g_logger = nullptr;
+        loggerInstance = nullptr;
     }
 
     Session(const Session&) = delete;

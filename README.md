@@ -3,17 +3,17 @@
 ## Native screen caster
 
 ### Description
-`way-cast` is a high-performance, native C++ screen-casting engine designed for Linux Wayland environments. It securely requests screen-capture sessions via **XDG Desktop Portals** (`xdg-desktop-portal`), receives high-framerate video and audio streams through **PipeWire**, encodes them via hardware acceleration (VA-API / NVENC) or software (`x264`/`opus`), and streams them in real-time to web browsers using **GStreamer's `webrtcsink`** (bundled with a built-in signaling and web server).
+`way-cast` is a high-performance, native C++ screen-casting engine designed for Linux Wayland environments. It securely requests screen-capture sessions via **XDG Desktop Portal**, receives high-framerate video and audio streams through **PipeWire**, encodes them via hardware acceleration (VA-API / NVENC) or software (`x264`/`opus`), and streams them in real-time to web browsers using **GStreamer's `webrtcsink`** (bundled with a built-in signaling and web server).
 
 ### Architecture Flow
-1. **XDG Desktop Portal (`XdgPortal`)**: Prompts the user with a system dialog to select a monitor/window securely, returning a PipeWire file descriptor (`fd`) and node ID.
+1. **XDG Desktop Portal (`Xdp`)**: Prompts the user with a system dialog to select a monitor/window securely, returning a PipeWire file descriptor (`fd`) and node ID.
 2. **PipeWire (`pipewiresrc`)**: Captures zero-copy raw video and audio streams directly from the display server's processing graph.
 3. **Encoding & Processing**: Converts and encodes raw frames using the best available hardware/software encoder (`nvh264enc`, `vah264enc`, or `x264enc`) alongside Opus audio encoding.
 4. **WebRTC (`webrtcsink`)**: Publishes the encoded streams over WebRTC, hosting a local HTTP and signaling server to let clients view the stream instantly in a browser.
 
 ### Prerequisites
 ```
-sudo apt install git cmake ninja-build gcc mold nasm bison flex autoconf autoconf-archive automake libtool python3-venv cargo rustc npm
+sudo apt install git cmake ninja-build gcc mold nasm bison flex autoconf autoconf-archive automake libtool python3-venv cargo rustc npm libportal-dev
 [optional] sudo apt install intel-media-va-driver libdrm-dev (for vaapi hw encoding)
 ```
 

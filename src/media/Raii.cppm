@@ -1,6 +1,10 @@
 module;
 
 #include <gst/gst.h>
+#ifdef __linux__
+#include <libportal/portal.h>
+#include <libportal/session.h>
+#endif
 
 export module media.Raii;
 
@@ -53,4 +57,12 @@ export namespace media::Raii
             gst_object_unref
         >
     >;
+
+#ifdef __linux__
+    using XdpSessionPtr = std::unique_ptr<XdpSession,
+        detail::CascadingDeleter<
+            g_object_unref
+        >
+    >;
+#endif
 }

@@ -8,11 +8,7 @@ find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0)
-pkg_check_modules(GST_APP REQUIRED IMPORTED_TARGET gstreamer-app-1.0)
-pkg_check_modules(GST_BASE REQUIRED IMPORTED_TARGET gstreamer-base-1.0)
-pkg_check_modules(GST_WEBRTC REQUIRED IMPORTED_TARGET gstreamer-webrtc-1.0)
-pkg_check_modules(GST_SDP REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0)
-pkg_check_modules(GIO REQUIRED IMPORTED_TARGET gio-2.0 gio-unix-2.0)
+pkg_check_modules(LIBPORTAL REQUIRED IMPORTED_TARGET libportal)
 
 # -----------------------------------------------------------------------------
 # Plugins & Paths Definitions
@@ -37,10 +33,10 @@ set(WAYCAST_MEDIA_SOURCES
     VideoEncoders.cppm
 )
 
-if(WIN32)
+if(UNIX)
+  list(APPEND WAYCAST_MEDIA_SOURCES linux/Xdp.cppm)
+elseif(WIN32)
   list(APPEND WAYCAST_MEDIA_SOURCES windows/Wgc.cppm)
-elseif(UNIX)
-  list(APPEND WAYCAST_MEDIA_SOURCES linux/XdgPortal.cppm)
 endif()
 
 target_sources(waycast_media
@@ -54,11 +50,7 @@ target_link_libraries(waycast_media
     waycast_logger
     Threads::Threads
     PkgConfig::GSTREAMER
-    PkgConfig::GST_APP
-    PkgConfig::GST_BASE
-    PkgConfig::GST_WEBRTC
-    PkgConfig::GST_SDP
-    PkgConfig::GIO
+    PkgConfig::LIBPORTAL
 )
 
 # -----------------------------------------------------------------------------

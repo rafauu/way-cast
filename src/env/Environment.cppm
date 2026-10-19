@@ -13,7 +13,7 @@ static void setEnvIfUnset(
     std::string_view value
 )
 {
-    if (::std::getenv(name) == nullptr and not value.empty())
+    if (std::getenv(name) == nullptr and not value.empty())
     {
         logger::info("[Environment] Setting {} to {}.", name, value.data());
         ::setenv(name, value.data(), 1);

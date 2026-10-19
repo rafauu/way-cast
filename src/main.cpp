@@ -1,44 +1,29 @@
-#include <csignal>
-
 import std;
 import env;
 import logger;
 import media.CapturePipeline;
-
-namespace
-{
-
-volatile std::sig_atomic_t shutdownRequested = 0;
-
-void requestShutdown(int) noexcept
-{
-    shutdownRequested = 1;
-}
-
-}
+import signals;
 
 int main()
 {
-    logger::Session _{};
-
-    logger::info("======================================================");
-    logger::info("Native Screen-Share Engine (PipeWire + WebRTCSink)");
-    logger::info("======================================================");
-
-    env::setPaths();
-
-    std::signal(SIGINT, requestShutdown);
-    std::signal(SIGTERM, requestShutdown);
-
     try
     {
+        logger::Session _{};
+
+        logger::info("==========================");
+        logger::info("Native Screen-Share Engine");
+        logger::info("==========================");
+
+        env::setPaths();
+        signals::registerHandlers();
+
         {
             media::CapturePipeline _{};
 
             logger::info("[SERVER ACTIVE] WebRTCSink is running.");
             logger::info("[SERVER ACTIVE] Press Ctrl+C to shut down.");
 
-            while (shutdownRequested == 0)
+            while (not signals::isShutdownRequested())
             {
                 using namespace std::chrono_literals;
                 std::this_thread::sleep_for(250ms);
@@ -53,6 +38,11 @@ int main()
     catch (const std::exception& e)
     {
         logger::critical("[FATAL ERROR] {}", e.what());
+        return 1;
+    }
+    catch (...)
+    {
+        logger::critical("[FATAL ERROR] Unknown non-standard exception caught.");
         return 1;
     }
 }
