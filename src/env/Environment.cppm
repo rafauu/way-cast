@@ -23,7 +23,7 @@ static void setEnvIfUnset(
 export namespace env
 {
 
-void setPaths()
+void configureRuntimePaths()
 {
     setEnvIfUnset("GST_PLUGIN_SCANNER", WAYCAST_GSTREAMER_PLUGIN_SCANNER);
     setEnvIfUnset("GST_PLUGIN_PATH",    WAYCAST_GSTREAMER_PLUGIN_PATH);

@@ -40,7 +40,7 @@ public:
 
             if (!item)
             {
-                logger::warn("[Wgc] User cancelled the screen capture selection.");
+                logger::warning("[Wgc] User cancelled the screen capture selection.");
                 return std::nullopt;
             }
 

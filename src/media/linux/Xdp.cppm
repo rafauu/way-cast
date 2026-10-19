@@ -173,14 +173,15 @@ public:
 
         xdp_portal_create_screencast_session(
             portal,
-            XDP_OUTPUT_MONITOR,
+            static_cast<XdpOutputType>(XDP_OUTPUT_MONITOR | XDP_OUTPUT_WINDOW),
             XDP_SCREENCAST_FLAG_NONE,
             XDP_CURSOR_MODE_EMBEDDED,
             XDP_PERSIST_MODE_NONE,
             nullptr,
             nullptr,
             onCreated,
-            &request);
+            &request
+        );
 
         std::jthread loopThread([&loop] {
             g_main_loop_run(loop.get());

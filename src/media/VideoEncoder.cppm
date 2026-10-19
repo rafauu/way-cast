@@ -2,7 +2,7 @@ module;
 
 #include <gst/gst.h>
 
-export module media.VideoEncoders;
+export module media.VideoEncoder;
 
 import std;
 import logger;
@@ -14,13 +14,13 @@ static bool isElementAvailable(const char* elementName)
     return factory != nullptr;
 }
 
-namespace media
+export namespace media
 {
 
-export class VideoEncoders
+class VideoEncoder
 {
 private:
-    static constexpr std::array ENCODERS_PRIORITIES{
+    static constexpr std::array EncoderPriorities{
         "nvh264enc",
 #ifdef __linux__
         "vah264enc",
@@ -32,7 +32,7 @@ private:
     };
 
 public:
-    VideoEncoders() = delete;
+    VideoEncoder() = delete;
 
     static std::optional<std::string> getBestWithProperties()
     {
@@ -46,9 +46,9 @@ private:
     {
         static auto availabilityList = [] {
             std::vector<std::string_view> available;
-            logger::debug("[VideoEncoders] Availability:");
+            logger::debug("[VideoEncoder] Availability:");
 
-            for (auto encoder : ENCODERS_PRIORITIES)
+            for (auto encoder : EncoderPriorities)
             {
                 const bool isAvailable = isElementAvailable(encoder);
                 logger::debug("- {}: {}", encoder, isAvailable);
@@ -64,18 +64,18 @@ private:
 
         if (not overwrite.empty())
         {
-            logger::info("[VideoEncoders] Overwritten encoder: {}", overwrite);
+            logger::info("[VideoEncoder] Overwritten encoder: {}", overwrite);
             return overwrite;
         }
 
         if (not availabilityList.empty())
         {
             const auto bestEncoder = availabilityList.front();
-            logger::debug("[VideoEncoders] Chosen encoder: {}", bestEncoder);
+            logger::debug("[VideoEncoder] Chosen encoder: {}", bestEncoder);
             return bestEncoder;
         }
 
-        logger::error("[VideoEncoders] No available encoders");
+        logger::error("[VideoEncoder] No available encoder");
         return std::nullopt;
     }
 

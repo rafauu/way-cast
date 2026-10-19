@@ -22,9 +22,10 @@ struct CaptureSessionInfo
     std::string audioSource;
 };
 
-namespace ScreenCapture
+class ScreenCapture
 {
-    std::optional<CaptureSessionInfo> requestSession()
+public:
+    static std::optional<CaptureSessionInfo> requestSession()
     {
         logger::info("[ScreenCapture] Requesting screen-capture session.");
 
@@ -45,6 +46,6 @@ namespace ScreenCapture
 #endif
         };
     }
-}
+};
 
 }

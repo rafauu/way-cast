@@ -8,12 +8,12 @@ import std;
 import logger;
 import media.Raii;
 import media.ScreenCapture;
-import media.VideoEncoders;
+import media.VideoEncoder;
 
-namespace media
+export namespace media
 {
 
-export class CapturePipeline
+class CapturePipeline
 {
 public:
     CapturePipeline()
@@ -28,7 +28,7 @@ public:
             throw std::runtime_error("Failed to obtain screen-capture session.");
         }
 
-        auto videoEncoder = VideoEncoders::getBestWithProperties();
+        auto videoEncoder = VideoEncoder::getBestWithProperties();
         if (not videoEncoder)
         {
             logger::error("[CapturePipeline] No video encoder available");

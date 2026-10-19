@@ -30,7 +30,7 @@ set(WAYCAST_MEDIA_SOURCES
     CapturePipeline.cppm
     Raii.cppm
     ScreenCapture.cppm
-    VideoEncoders.cppm
+    VideoEncoder.cppm
 )
 
 if(UNIX)

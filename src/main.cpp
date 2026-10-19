@@ -14,7 +14,7 @@ int main()
         logger::info("Native Screen-Share Engine");
         logger::info("==========================");
 
-        env::setPaths();
+        env::configureRuntimePaths();
         signals::registerHandlers();
 
         {
