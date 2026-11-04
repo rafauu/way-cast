@@ -8,7 +8,7 @@ import std;
 import logger;
 
 
-static volatile std::sig_atomic_t shutdownRequested = 0;
+static volatile std::sig_atomic_t signalRaised = 0;
 
 export namespace signals
 {
@@ -17,8 +17,8 @@ void registerHandlers()
 {
     logger::info("[Signals] Registering handlers.");
 
-    auto signalHandler = [] (int) noexcept {
-        shutdownRequested = 1;
+    auto signalHandler = [] (int signal) noexcept {
+        signalRaised = signal;
     };
 
     std::signal(SIGINT, signalHandler);
@@ -27,7 +27,16 @@ void registerHandlers()
 
 bool isShutdownRequested()
 {
-    return shutdownRequested != 0;
+    if (signalRaised == 0)
+    {
+        return false;
+    }
+
+    logger::info(
+        "[Signals] Shutdown requested with signal {}.",
+        static_cast<std::remove_volatile_t<decltype(signalRaised)>>(signalRaised)
+    );
+    return true;
 }
 
 }

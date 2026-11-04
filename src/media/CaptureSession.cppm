@@ -1,6 +1,6 @@
 module;
 
-export module media.ScreenCapture;
+export module media.CaptureSession;
 
 import std;
 import logger;
@@ -22,12 +22,14 @@ struct CaptureSessionInfo
     std::string audioSource;
 };
 
-class ScreenCapture
+class CaptureSession
 {
 public:
-    static std::optional<CaptureSessionInfo> requestSession()
+    CaptureSession() = delete;
+
+    static std::optional<CaptureSessionInfo> request()
     {
-        logger::info("[ScreenCapture] Requesting screen-capture session.");
+        logger::info("[CaptureSession] Requesting capture session.");
 
         static const auto captureSession = Backend::requestScreenCapture();
 

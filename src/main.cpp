@@ -29,7 +29,7 @@ int main()
                 std::this_thread::sleep_for(250ms);
             }
 
-            logger::info("\n[Shutdown] Signal received. Stopping...");
+            logger::info("\n[Shutdown] Stopping capture pipeline.");
         }
 
         logger::info("[Shutdown] Capture pipeline stopped safely.");

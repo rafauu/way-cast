@@ -28,8 +28,9 @@ set(WAYCAST_ENCODER_OVERWRITE
 
 set(WAYCAST_MEDIA_SOURCES
     CapturePipeline.cppm
+    CaptureSession.cppm
+    PipelineBuilder.cppm
     Raii.cppm
-    ScreenCapture.cppm
     VideoEncoder.cppm
 )
 
