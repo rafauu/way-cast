@@ -6,10 +6,10 @@ import signals;
 
 int main()
 {
+    logger::Session _{};
+
     try
     {
-        logger::Session _{};
-
         logger::info("==========================");
         logger::info("Native Screen-Share Engine");
         logger::info("==========================");

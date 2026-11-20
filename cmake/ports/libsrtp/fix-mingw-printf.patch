@@ -1,0 +1,11 @@
+--- a/crypto/include/err.h
++++ b/crypto/include/err.h
+@@ -52,7 +52,7 @@
+ #if defined(__clang__) || (defined(__GNUC__) && defined(__has_attribute))
+ #if __has_attribute(format)
+ #define LIBSRTP_FORMAT_PRINTF(fmt, args)                                       \
+-    __attribute__((format(__printf__, fmt, args)))
++    __attribute__((format(gnu_printf, fmt, args)))
+ #else
+ #define LIBSRTP_FORMAT_PRINTF(fmt, args)
+ #endif

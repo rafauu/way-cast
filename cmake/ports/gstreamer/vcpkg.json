@@ -590,7 +590,10 @@
                     ],
                     "platform": "osx"
                 },
-                "libva"
+                {
+                    "name": "libva",
+                    "platform": "linux"
+                }
             ]
         },
         "plugins-base": {

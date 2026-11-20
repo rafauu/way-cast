@@ -1,9 +1,3 @@
-add_library(stdcxx)
-target_sources(stdcxx
-  PUBLIC
-    FILE_SET std_module TYPE CXX_MODULES BASE_DIRS "${GCC_STD_DIR}" FILES ${GCC_STD_MODULE}
-)
-
 add_subdirectory(env)
 add_subdirectory(logger)
 add_subdirectory(media)
@@ -12,6 +6,10 @@ add_subdirectory(signals)
 add_executable(${PROJECT_NAME}
   main.cpp
 )
+
+if(WIN32)
+  target_sources(${PROJECT_NAME} PRIVATE waycast.rc)
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
   INTERPROCEDURAL_OPTIMIZATION_RELEASE ON
@@ -30,7 +28,6 @@ target_compile_options(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
   PRIVATE
-    stdcxx
     waycast_env
     waycast_logger
     waycast_media

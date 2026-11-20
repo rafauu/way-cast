@@ -12,6 +12,5 @@ target_sources(waycast_signals
 
 target_link_libraries(waycast_signals
   PUBLIC
-    stdcxx
     waycast_logger
 )

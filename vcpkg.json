@@ -9,20 +9,29 @@
                 "plugins-good",
                 "plugins-bad",
                 "plugins-ugly",
-                "nvcodec",
                 "opus-base",
                 "webrtc",
                 "x264"
             ]
         },
+        {
+            "name": "gstreamer",
+            "features": ["nvcodec"],
+            "platform": "linux"
+        },
         "gst-plugin-webrtc",
-        "pipewire",
+        "libsrtp",
+        {
+            "name": "pipewire",
+            "platform": "linux"
+        },
         "quill"
     ],
     "description": [
         "Custom ports:",
         "- gstreamer - does not expose certain options as features (va)",
         "- gst-plugin-webrtc - does not exist in vcpkg registry (rust package)",
+        "- libsrtp - patched to fix printf format checker on mingw64",
         "- pipewire - does not expose certain options as features (gst plugin)"
     ]
 }

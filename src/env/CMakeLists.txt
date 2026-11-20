@@ -4,6 +4,10 @@ add_library(waycast_env)
 # Plugins & Paths Definitions
 # -----------------------------------------------------------------------------
 
+set(WAYCAST_VCPKG_BIN
+  "${WAYCAST_VCPKG_PREFIX}/bin"
+)
+
 set(WAYCAST_GSTREAMER_PLUGIN_SCANNER
   "${WAYCAST_VCPKG_PREFIX}/tools/gstreamer/gst-plugin-scanner"
 )
@@ -12,7 +16,11 @@ set(WAYCAST_GSTREAMER_PLUGIN_PATH
   "${WAYCAST_VCPKG_PREFIX}/plugins/gstreamer"
 )
 
-if(UNIX)
+set(WAYCAST_GSTREAMER_RUST_PLUGIN_PATH
+  "${WAYCAST_VCPKG_PREFIX}/bin/gstreamer-1.0"
+)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(WAYCAST_LIBVA_DRIVERS_PATH
     "/usr/lib/x86_64-linux-gnu/dri"
   )
@@ -30,7 +38,6 @@ target_sources(waycast_env
 
 target_link_libraries(waycast_env
   PUBLIC
-    stdcxx
     waycast_logger
 )
 
@@ -40,8 +47,10 @@ target_link_libraries(waycast_env
 
 target_compile_definitions(waycast_env
   PRIVATE
+    WAYCAST_VCPKG_BIN=\"${WAYCAST_VCPKG_BIN}\"
     WAYCAST_GSTREAMER_PLUGIN_SCANNER=\"${WAYCAST_GSTREAMER_PLUGIN_SCANNER}\"
     WAYCAST_GSTREAMER_PLUGIN_PATH=\"${WAYCAST_GSTREAMER_PLUGIN_PATH}\"
+    WAYCAST_GSTREAMER_RUST_PLUGIN_PATH=\"${WAYCAST_GSTREAMER_RUST_PLUGIN_PATH}\"
     WAYCAST_LIBVA_DRIVERS_PATH=\"${WAYCAST_LIBVA_DRIVERS_PATH}\"
 )
 
@@ -53,7 +62,9 @@ message(STATUS "")
 message(STATUS "============================================================")
 message(STATUS "WayCast Env")
 message(STATUS "============================================================")
-message(STATUS "Gst plugin scanner:  ${WAYCAST_GSTREAMER_PLUGIN_SCANNER}")
-message(STATUS "Gst plugin path:     ${WAYCAST_GSTREAMER_PLUGIN_PATH}")
-message(STATUS "libVA drivers path:  ${WAYCAST_LIBVA_DRIVERS_PATH}")
+message(STATUS "Vcpkg bin:            ${WAYCAST_VCPKG_BIN}")
+message(STATUS "Gst plugin scanner:   ${WAYCAST_GSTREAMER_PLUGIN_SCANNER}")
+message(STATUS "Gst plugin path:      ${WAYCAST_GSTREAMER_PLUGIN_PATH}")
+message(STATUS "Gst rust plugin path: ${WAYCAST_GSTREAMER_RUST_PLUGIN_PATH}")
+message(STATUS "libVA drivers path:   ${WAYCAST_LIBVA_DRIVERS_PATH}")
 message(STATUS "============================================================")

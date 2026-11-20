@@ -1,0 +1,11 @@
+--- a/subprojects/gst-plugins-bad/sys/d3d11/meson.build
++++ b/subprojects/gst-plugins-bad/sys/d3d11/meson.build
+@@ -149,7 +149,7 @@
+ 
+ # if build target is Windows 10 and WINAPI_PARTITION_APP is allowed,
+ # we can build UWP only modules as well
+-if d3d11_winapi_app
++if d3d11_winapi_app and cc.get_id() == 'msvc'
+   d3d11_sources += winapi_app_sources
+   extra_dep += [runtimeobject_lib]
+   if cc.get_id() == 'msvc' and get_option('b_sanitize') == 'address'

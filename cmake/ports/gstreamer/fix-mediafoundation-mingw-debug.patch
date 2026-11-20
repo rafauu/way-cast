@@ -1,0 +1,18 @@
+--- a/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfutils.cpp
++++ b/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfutils.cpp
+@@ -941,6 +941,7 @@
+   return nullptr;
+ }
+ 
++#ifndef GST_DISABLE_GST_DEBUG
+ static void
+ gst_mf_dump_attribute_value_by_index (IMFAttributes * attr, const gchar * msg,
+     guint index, GstDebugLevel level, GstDebugCategory * cat,
+@@ -975,6 +976,7 @@
+   g_free (guid_name);
+   g_free (value);
+ }
++#endif /* GST_DISABLE_GST_DEBUG */
+ 
+ void
+ _gst_mf_dump_attributes (IMFAttributes * attr, const gchar * msg,

@@ -1,0 +1,12 @@
+diff --git a/subprojects/gst-plugins-bad/sys/d3d11/meson.build b/subprojects/gst-plugins-bad/sys/d3d11/meson.build
+--- a/subprojects/gst-plugins-bad/sys/d3d11/meson.build
++++ b/subprojects/gst-plugins-bad/sys/d3d11/meson.build
+@@ -166,7 +166,7 @@ if d3d11_winapi_desktop
+     extra_dep += [winmm_lib]
+   endif
+ 
+-  if have_wgc and dwmapi_lib.found()
++  if have_wgc and dwmapi_lib.found() and cc.get_id() == 'msvc'
+     d3d11_sources += winrtcapture_sources
+     extra_args += ['-DHAVE_WINRT_CAPTURE']
+     extra_dep += [dwmapi_lib]

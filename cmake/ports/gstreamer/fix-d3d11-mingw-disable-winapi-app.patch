@@ -1,0 +1,13 @@
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/d3d11/meson.build b/subprojects/gst-plugins-bad/gst-libs/gst/d3d11/meson.build
+index 42216c7..c6c954f 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/d3d11/meson.build
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/d3d11/meson.build
+@@ -83,7 +83,7 @@ d3d11_winapi_desktop = cxx.compiles('''#include <winapifamily.h>
+     dependencies: [d3d11_lib, dxgi_lib],
+     name: 'building for Win32')
+ 
+-if runtimeobject_lib.found() and d3dcompiler_lib.found()
++if cc.get_id() == 'msvc' and runtimeobject_lib.found() and d3dcompiler_lib.found()
+   d3d11_winapi_app = cxx.compiles('''#include <winapifamily.h>
+       #include <windows.applicationmodel.core.h>
+       #include <wrl.h>

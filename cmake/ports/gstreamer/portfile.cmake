@@ -6,6 +6,12 @@ vcpkg_from_gitlab(
     SHA512 58c666b3e298a7836dc13f87665d841dc11397d7e86cec53fcb36375041c4f7bec1eafb91190627c9cdc6a29495dbe8bbb5789ab15889e671aa03f4c004b6927
     HEAD_REF main
     PATCHES
+        fix-mediafoundation-mingw-winrt.patch
+        fix-qsv-mingw-wcscpy.patch
+        fix-d3d11-minGW-wgc.patch
+        fix-d3d11-minGW-disable-swapchainpanel.patch
+        fix-mediafoundation-mingw-debug.patch
+        fix-d3d11-mingw-disable-winapi-app.patch
         fix-clang-cl.patch
         fix-bz2-windows-debug-dependency.patch
         fix-multiple-def.patch
@@ -162,6 +168,16 @@ endif()
 #   Every other feature options are made available if the dependency is available on vcpkg and if the plugin has managed to build during tests
 #
 
+if(VCPKG_TARGET_IS_LINUX)
+    set(GST_VA_OPTION -Dgst-plugins-bad:va=enabled)
+    set(GST_D3D11_OPTION -Dgst-plugins-bad:d3d11=disabled)
+    set(GST_MF_OPTION -Dgst-plugins-bad:mediafoundation=disabled)
+else()
+    set(GST_VA_OPTION -Dgst-plugins-bad:va=disabled)
+    set(GST_D3D11_OPTION -Dgst-plugins-bad:d3d11=enabled)
+    set(GST_MF_OPTION -Dgst-plugins-bad:mediafoundation=enabled)
+endif()
+
 vcpkg_configure_meson(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
@@ -243,7 +259,7 @@ vcpkg_configure_meson(
         -Dgst-plugins-bad:curl=disabled # Error during plugin build
         -Dgst-plugins-bad:curl-ssh2=disabled
         -Dgst-plugins-bad:d3dvideosink=auto
-        -Dgst-plugins-bad:d3d11=auto
+        ${GST_D3D11_OPTION} # auto in original
         -Dgst-plugins-bad:decklink=disabled
         -Dgst-plugins-bad:directfb=disabled
         -Dgst-plugins-bad:directsound=auto
@@ -263,7 +279,7 @@ vcpkg_configure_meson(
         -Dgst-plugins-bad:ladspa=disabled
         -Dgst-plugins-bad:ldac=disabled
         -Dgst-plugins-bad:lv2=disabled # Error during plugin configuration (lilv pkg-config file missing)
-        -Dgst-plugins-bad:mediafoundation=auto
+        ${GST_MF_OPTION} # auto in original
         -Dgst-plugins-bad:mpeg2enc=disabled
         -Dgst-plugins-bad:mplex=disabled
         -Dgst-plugins-bad:msdk=disabled
@@ -289,7 +305,7 @@ vcpkg_configure_meson(
         -Dgst-plugins-bad:transcode=disabled
         -Dgst-plugins-bad:ttml=disabled
         -Dgst-plugins-bad:uvch264=disabled
-        -Dgst-plugins-bad:va=enabled #disabled in original
+        ${GST_VA_OPTION} #disabled in original
         -Dgst-plugins-bad:voaacenc=disabled
         -Dgst-plugins-bad:voamrwbenc=disabled
         -Dgst-plugins-bad:wasapi=auto

@@ -87,7 +87,7 @@ private:
         }
         else if (encoder == "mfh264enc")
         {
-            return "rate-control=pcbr bitrate=4000000"; // tbd: adjust
+            return "rc-mode=cbr bitrate=4000 low-latency=true bframes=0 gop-size=60 cabac=false";
         }
         else if (encoder == "vah264enc" or encoder == "vah264lpenc")
         {

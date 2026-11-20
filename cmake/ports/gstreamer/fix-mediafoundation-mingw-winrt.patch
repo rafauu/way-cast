@@ -1,0 +1,11 @@
+--- a/subprojects/gst-plugins-bad/sys/mediafoundation/meson.build
++++ b/subprojects/gst-plugins-bad/sys/mediafoundation/meson.build
+@@ -103,7 +103,7 @@
+     dependencies: mf_lib_deps,
+     name: 'building for Win32')
+ 
+-if runtimeobject_lib.found()
++if runtimeobject_lib.found() and cxx.get_id() == 'msvc'
+   winapi_app = cxx.compiles('''#include <winapifamily.h>
+       #include <windows.applicationmodel.core.h>
+       #include <wrl.h>

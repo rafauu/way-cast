@@ -1,44 +1,66 @@
 {
-    "version": 3,
+    "version": 6,
     "configurePresets": [
         {
             "name": "base",
             "hidden": true,
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
-            "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
                 "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/cmake/ports"
             }
         },
         {
-            "name": "debug",
-            "displayName": "Debug Build",
+            "name": "linux-release",
+            "displayName": "Linux Release",
             "inherits": "base",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "VCPKG_TARGET_TRIPLET": "x64-linux-debug"
+                "VCPKG_HOST_TRIPLET": "x64-linux-dynamic-release",
+                "VCPKG_TARGET_TRIPLET": "x64-linux-dynamic-release"
             }
         },
         {
-            "name": "release",
-            "displayName": "Release Build",
+            "name": "windows-release",
+            "displayName": "Windows Release",
             "inherits": "base",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "VCPKG_TARGET_TRIPLET": "x64-linux-release"
+                "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic-release",
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic-release"
             }
         }
     ],
     "buildPresets": [
         {
-            "name": "debug",
-            "configurePreset": "debug"
+            "name": "linux-release",
+            "configurePreset": "linux-release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
         },
         {
-            "name": "release",
-            "configurePreset": "release"
+            "name": "windows-release",
+            "configurePreset": "windows-release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
         }
     ]
 }
