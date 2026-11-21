@@ -1,10 +1,6 @@
-module;
-
-#include <format>
-#include <string>
-
 export module logger;
 
+import std;
 
 namespace logger
 {

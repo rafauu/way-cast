@@ -1,5 +1,3 @@
-module;
-
 export module media.CaptureSession;
 
 import std;

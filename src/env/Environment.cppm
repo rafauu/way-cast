@@ -8,7 +8,12 @@ import std;
 import logger;
 
 
-static void setEnv(const char* name, const char* value)
+namespace
+{
+
+namespace impl
+{
+void setEnv(const char* name, const char* value)
 {
 #ifdef __linux__
     ::setenv(name, value, 1);
@@ -17,16 +22,28 @@ static void setEnv(const char* name, const char* value)
 #endif
 }
 
-static void setEnvIfUnset(const char* name, std::string_view value)
+constexpr char pathSeparator() noexcept
 {
-    if (std::getenv(name) == nullptr and not value.empty())
-    {
-        logger::info("[Environment] Setting {} to {}.", name, value.data());
-        setEnv(name, value.data());
-    }
+#ifdef __linux__
+    return ':';
+#else
+    return ';';
+#endif
+}
 }
 
-static void appendToEnv(const char* name, std::string_view value)
+void setEnv(const char* name, std::string value)
+{
+    if (value.empty())
+    {
+        return;
+    }
+
+    logger::info("[Environment] Setting {} to {}.", name, value);
+    impl::setEnv(name, value.c_str());
+}
+
+void prependToEnv(const char* name, std::string value)
 {
     if (value.empty())
     {
@@ -35,36 +52,29 @@ static void appendToEnv(const char* name, std::string_view value)
 
     const char* oldValue = std::getenv(name);
 
-    std::string newValue{value};
-
     if (oldValue != nullptr and *oldValue != '\0')
     {
-#ifdef _WIN32
-        constexpr char separator = ';';
-#else
-        constexpr char separator = ':';
-#endif
-        newValue += separator;
-        newValue += oldValue;
+        value += impl::pathSeparator();
+        value += oldValue;
     }
 
-    logger::info("[Environment] Setting {} to {}.", name, newValue);
-
-    setEnv(name, newValue.c_str());
+    logger::info("[Environment] Setting {} to {}.", name, value);
+    impl::setEnv(name, value.c_str());
 }
 
+}
 
 export namespace env
 {
 
 void configureRuntimePaths()
 {
-    appendToEnv("PATH",            WAYCAST_VCPKG_BIN);
-    appendToEnv("GST_PLUGIN_PATH", WAYCAST_GSTREAMER_PLUGIN_PATH);
-    appendToEnv("GST_PLUGIN_PATH", WAYCAST_GSTREAMER_RUST_PLUGIN_PATH);
+    prependToEnv("PATH",            WAYCAST_VCPKG_BIN);
+    prependToEnv("GST_PLUGIN_PATH", WAYCAST_GSTREAMER_PLUGIN_PATH);
+    prependToEnv("GST_PLUGIN_PATH", WAYCAST_GSTREAMER_RUST_PLUGIN_PATH);
 
-    setEnvIfUnset("GST_PLUGIN_SCANNER", WAYCAST_GSTREAMER_PLUGIN_SCANNER);
-    setEnvIfUnset("LIBVA_DRIVERS_PATH", WAYCAST_LIBVA_DRIVERS_PATH);
+    setEnv("GST_PLUGIN_SCANNER", WAYCAST_GSTREAMER_PLUGIN_SCANNER);
+    setEnv("LIBVA_DRIVERS_PATH", WAYCAST_LIBVA_DRIVERS_PATH);
 }
 
 };

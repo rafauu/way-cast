@@ -19,7 +19,7 @@ export WindowsSDKVersion="10.0.20348.0"
 export VCPKG_KEEP_ENV_VARS="WindowsSDKDir;WindowsSDKVersion"
 
 pacman -Syu
-pacman -S --needed git mingw-w64-ucrt-x86_64-{cmake,ninja,gcc,mold,rust,nodejs}
+pacman -S --needed git mingw-w64-ucrt-x86_64-{cmake,ninja,gcc,rust,nodejs}
 ```
 ### Build & run
 ```
