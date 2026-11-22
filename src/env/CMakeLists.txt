@@ -1,7 +1,7 @@
 add_library(waycast_env)
 
 # -----------------------------------------------------------------------------
-# Plugins & Paths Definitions
+# Configuration
 # -----------------------------------------------------------------------------
 
 set(WAYCAST_VCPKG_BIN
@@ -36,13 +36,17 @@ target_sources(waycast_env
       Environment.cppm
 )
 
+# -----------------------------------------------------------------------------
+# Linking
+# -----------------------------------------------------------------------------
+
 target_link_libraries(waycast_env
   PUBLIC
     waycast_logger
 )
 
 # -----------------------------------------------------------------------------
-# Pass runtime paths into the application
+# Compile definitions
 # -----------------------------------------------------------------------------
 
 target_compile_definitions(waycast_env

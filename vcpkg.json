@@ -29,7 +29,7 @@
     ],
     "description": [
         "Custom ports:",
-        "- gstreamer - does not expose certain options as features (va)",
+        "- gstreamer - does not expose certain options as features (va, d3d11, mf)",
         "- gst-plugin-webrtc - does not exist in vcpkg registry (rust package)",
         "- libsrtp - patched to fix printf format checker on mingw64",
         "- pipewire - does not expose certain options as features (gst plugin)"

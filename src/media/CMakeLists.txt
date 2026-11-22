@@ -13,7 +13,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 # -----------------------------------------------------------------------------
-# Plugins & Paths Definitions
+# Configuration
 # -----------------------------------------------------------------------------
 
 set(WAYCAST_WEB_DIR
@@ -52,29 +52,29 @@ target_sources(waycast_media
     ${WAYCAST_MEDIA_SOURCES}
 )
 
-set(WAYCAST_MEDIA_LIBRARIES
-  waycast_logger
-  Threads::Threads
-  PkgConfig::GSTREAMER
+# -----------------------------------------------------------------------------
+# Linking
+# -----------------------------------------------------------------------------
+target_link_libraries(waycast_media
+  PUBLIC
+    waycast_logger
+  PRIVATE
+    Threads::Threads
+    PkgConfig::GSTREAMER
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  list(APPEND WAYCAST_MEDIA_LIBRARIES PkgConfig::LIBPORTAL)
+  target_link_libraries(waycast_media PRIVATE PkgConfig::LIBPORTAL)
 elseif(WIN32)
-  list(APPEND WAYCAST_MEDIA_LIBRARIES runtimeobject comctl32)
+  target_link_libraries(waycast_media PRIVATE runtimeobject comctl32)
 endif()
 
-target_link_libraries(waycast_media
-  PUBLIC
-    ${WAYCAST_MEDIA_LIBRARIES}
-)
-
 # -----------------------------------------------------------------------------
-# Pass runtime paths into the application
+# Compile definitions
 # -----------------------------------------------------------------------------
 
 target_compile_definitions(waycast_media
-  PUBLIC
+  PRIVATE
     WAYCAST_WEB_DIR=\"${WAYCAST_WEB_DIR}\"
     WAYCAST_ENCODER_OVERWRITE=\"${WAYCAST_ENCODER_OVERWRITE}\"
 )

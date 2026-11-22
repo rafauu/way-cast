@@ -10,6 +10,10 @@ target_sources(waycast_signals
       Signals.cppm
 )
 
+# -----------------------------------------------------------------------------
+# Linking
+# -----------------------------------------------------------------------------
+
 target_link_libraries(waycast_signals
   PUBLIC
     waycast_logger
