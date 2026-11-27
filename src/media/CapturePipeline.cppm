@@ -6,9 +6,9 @@ export module media.CapturePipeline;
 
 import std;
 import logger;
+import media.core.raii;
 import media.CaptureSession;
 import media.PipelineBuilder;
-import media.Raii;
 import media.VideoEncoder;
 
 export namespace media
@@ -36,7 +36,7 @@ public:
             throw std::runtime_error("No video encoder available");
         }
 
-        Raii::GstPipelineElementPtr pipeline = PipelineBuilder::build(*sessionInfo, *videoEncoder);
+        core::raii::GstPipelineElementPtr pipeline = PipelineBuilder::build(*sessionInfo, *videoEncoder);
 
         if (not pipeline)
         {
@@ -44,7 +44,7 @@ public:
             throw std::runtime_error("Pipeline creation failed.");
         }
 
-        Raii::GMainLoopPtr mainLoop{ g_main_loop_new(nullptr, FALSE) };
+        core::raii::GMainLoopPtr mainLoop{ g_main_loop_new(nullptr, FALSE) };
 
         if (not mainLoop)
         {

@@ -6,8 +6,8 @@ export module media.PipelineBuilder;
 
 import std;
 import logger;
+import media.core.raii;
 import media.CaptureSession;
-import media.Raii;
 
 export namespace media
 {
@@ -17,8 +17,8 @@ class PipelineBuilder
 public:
     PipelineBuilder() = delete;
 
-    [[nodiscard]] static Raii::GstPipelineElementPtr build(
-        const CaptureSessionInfo& sessionInfo,
+    [[nodiscard]] static core::raii::GstPipelineElementPtr build(
+        const CaptureSession::Info& sessionInfo,
         std::string_view videoEncoder
     )
     {
@@ -63,9 +63,9 @@ public:
 
         logger::debug("[PipelineBuilder] Pipeline description:\n{}", pipelineDescription);
 
-        Raii::GErrorPtr error;
+        core::raii::GErrorPtr error;
 
-        Raii::GstPipelineElementPtr pipeline{
+        core::raii::GstPipelineElementPtr pipeline{
             gst_parse_launch(
                 pipelineDescription.c_str(),
                 std::out_ptr(error)

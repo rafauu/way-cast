@@ -6,17 +6,17 @@ module;
 #include <libportal/session.h>
 #endif
 
-export module media.Raii;
+export module media.core.raii;
 
 import std;
 
-namespace media::detail
+namespace media::core::raii::detail
 {
 
 template <auto... Fns>
 struct CascadingDeleter
 {
-    void operator()(auto* ptr) const noexcept
+    static void operator()(auto* ptr) noexcept
     {
         if (ptr)
         {
@@ -25,13 +25,13 @@ struct CascadingDeleter
     }
 };
 
-auto setPipelineNull = [] (auto* ptr) {
+constexpr auto setPipelineNull = [] (auto* ptr) {
     gst_element_set_state(ptr, GST_STATE_NULL);
 };
 
 }
 
-export namespace media::Raii
+export namespace media::core::raii
 {
     using GMainLoopPtr = std::unique_ptr<GMainLoop,
         detail::CascadingDeleter<

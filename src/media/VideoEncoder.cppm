@@ -6,11 +6,11 @@ export module media.VideoEncoder;
 
 import std;
 import logger;
-import media.Raii;
+import media.core.raii;
 
-static bool isElementAvailable(const char* elementName)
+[[nodiscard]] static bool isElementAvailable(const char* elementName)
 {
-    media::Raii::GstElementFactoryPtr factory {gst_element_factory_find(elementName)};
+    media::core::raii::GstElementFactoryPtr factory {gst_element_factory_find(elementName)};
     return factory != nullptr;
 }
 
@@ -34,7 +34,7 @@ private:
 public:
     VideoEncoder() = delete;
 
-    static std::optional<std::string> getBestWithProperties()
+    [[nodiscard]] static std::optional<std::string> getBestWithProperties()
     {
         return getBestEncoder().transform([](const auto& encoder) {
             return std::format("{} {}", encoder, getProperties(encoder));
@@ -42,7 +42,7 @@ public:
     }
 
 private:
-    static std::optional<std::string_view> getBestEncoder()
+    [[nodiscard]] static std::optional<std::string_view> getBestEncoder()
     {
         static auto availabilityList = [] {
             std::vector<std::string_view> available;
@@ -79,7 +79,7 @@ private:
         return std::nullopt;
     }
 
-    static std::string_view getProperties(const auto& encoder)
+    [[nodiscard]] static std::string_view getProperties(const auto& encoder)
     {
         if (encoder == "nvh264enc")
         {

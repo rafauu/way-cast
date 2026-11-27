@@ -5,5 +5,5 @@
 
 namespace media::Win32Impl
 {
-    std::optional<std::uintptr_t> selectMonitor();
+    [[nodiscard]] std::optional<std::uintptr_t> selectMonitor();
 }

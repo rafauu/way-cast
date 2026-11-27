@@ -25,7 +25,7 @@ struct MonitorInfo
     bool primary;
 };
 
-BOOL CALLBACK enumerateMonitor(
+[[nodiscard]] BOOL CALLBACK enumerateMonitor(
     HMONITOR monitor,
     HDC,
     LPRECT,

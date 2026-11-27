@@ -25,7 +25,7 @@ void registerHandlers()
     std::signal(SIGTERM, signalHandler);
 }
 
-bool isShutdownRequested()
+[[nodiscard]] bool isShutdownRequested()
 {
     if (signalRaised == 0)
     {

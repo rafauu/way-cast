@@ -4,7 +4,7 @@ module;
 #include <cstdint>
 #include <optional>
 
-module media.Win32;
+module media.Backend;
 
 import logger;
 

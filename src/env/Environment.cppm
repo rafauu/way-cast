@@ -22,7 +22,7 @@ void setEnv(const char* name, const char* value)
 #endif
 }
 
-constexpr char pathSeparator() noexcept
+[[nodiscard]] constexpr char pathSeparator() noexcept
 {
 #ifdef __linux__
     return ':';

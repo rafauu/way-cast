@@ -41,7 +41,7 @@ target_sources(waycast_env
 # -----------------------------------------------------------------------------
 
 target_link_libraries(waycast_env
-  PUBLIC
+  PRIVATE
     waycast_logger
 )
 

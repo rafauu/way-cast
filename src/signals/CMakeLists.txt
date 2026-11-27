@@ -15,6 +15,6 @@ target_sources(waycast_signals
 # -----------------------------------------------------------------------------
 
 target_link_libraries(waycast_signals
-  PUBLIC
+  PRIVATE
     waycast_logger
 )
